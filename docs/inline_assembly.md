@@ -1,0 +1,192 @@
+# GCC Inline Assembly
+
+## 概述
+
+内联汇编就是一种编写为内联函数的汇编程序，它方便，快速并且在系统编程中非常有用。使用内联汇编需要用到asm关键字，内联汇编之所以重要，主要是因为它能够操作并输出到C变量上，由于这种能力使得asm汇编指令作为接口连接C语言与汇编。
+
+## GCC汇编语法
+
+GCC使用AT&T/UNIX汇编语法，以下描述了AT&T汇编语法与Intel汇编语法的差别。
+
+1. 源-目的操作数顺序
+
+   Intel汇编语法第一个操作数目的操作数，第二个操作数是源操作数，AT&T汇编语法则刚好相反。
+
+   Intel汇编 ：```mov eax, 1```
+
+   AT&T汇编：```movl $1, %eax```
+
+2. 寄存器名称
+
+   AT&T汇编语法中寄存器名有**%**前缀，而Intel则没有。
+
+   Intel汇编 ：```mov eax, 1```
+
+   AT&T汇编：```movl $1, %eax```
+
+3. 立即数操作
+
+   AT&T汇编语法中直接立即数有**$**前缀，其中紧跟着**0x**和立即数表示十六进制；而Intel汇编语法中立即数没有前缀，其中以立即数加**h**后缀表示十六进制。
+
+   Intel汇编 ：10 （十进制）10h（十六进制）
+
+   AT&T汇编：$10 （十进制） $0x10（十六进制）
+
+4. 操作数大小
+
+   AT&T汇编语法中使用操作码后紧跟**b（8-bit）w（16-bit）l（32-bit）**表示内存操作大小；而Intel则通过内存操作前缀**byte ptr，word ptr，dword ptr**来表示。
+
+   Intel汇编 ：```mov a1, byte ptr foo```
+
+   AT&T汇编：```movb foo, %a1```
+
+5. 内存操作
+
+   AT&T汇编语法中基址寄存器（base register）是封闭在（）中的；而Intel汇编语法中则是封闭在[]中的。
+
+   AT&T汇编语法中间接引用：disp（base，index，scale）
+
+   Intel汇编语法中间接引用：[base + index * scal + disp] .
+
+   Intel汇编 ：```sub eax, [ebx + ecx * 4h - 20h]```
+
+   AT&T汇编：```sub -0x20(%ebx, %ecx, 04), %eax```
+
+
+
+| Intel Code                      | AT&T Code                               |
+| ------------------------------- | --------------------------------------- |
+| ```move eax, 1```               | ```movl $1, %eax```                     |
+| ```mov ebx, 0ffh```             | ```movl $0xff, %ebx```                  |
+| ```int 80h```                   | ```int $0x80```                         |
+| ```mov ebx, eax```              | ```movl %eax, %ebx```                   |
+| ```mov eax, [ecx]```            | ```movl (%ecx), %ebx```                 |
+| ```mov eax, [ebx+3]```          | ```movl 3(%ebx), %eax```                |
+| ```mov eax, [ebx+20h]```        | ```movl 0x20(%ebx), $eax```             |
+| ```add eax, [ebx+ecx*2h]```     | ```add (%ebx, %ecx, 0x2), %eax```       |
+| ```lea eax, [ebx+ecx]```        | ```leal (%ebx, %ecx), %eax```           |
+| ```sub eax, [ebx+ecx*4h-20h]``` | ```subl -0x20(%ebx, %ecx, 0x4), %eax``` |
+
+## 基本格式
+
+**asm**关键字和**\__asm__**是等同的。
+
+单行示例：
+
+```c
+/* moves the contents of ecx to eax */
+asm("movl %ecx, %eax");
+
+/* moves the byte from bh to the memory pointed by eax */
+__asm__("mov1 %bh, (%eax)");
+```
+
+多行示例：
+
+```c
+__asm__(
+	"movl %eax, %bx \n\t"
+    "movl $56, %esi \n\t"
+    "mol %ecx, $label(%edx, %ebx, $4) \n\t"
+    "mob %ah, (%ebx)"
+);
+```
+
+## 扩展汇编
+
+扩展汇编允许指定（操作数）对应的输入寄存器，输出寄存器以及多个变更寄存器（clobbered registers）。
+
+```
+asm (
+	assembler template
+	: output operands             /* optional */
+	: input operands              /* optional */
+	: list of clobbered registers /* optional */
+);
+```
+
+示例：
+
+```c
+int a = 10, b;
+// b = a;
+asm (
+	"movl %1, %%eax \n\t"
+    "movl %%eax, %0"
+    : "=r" (b)
+    : "r" (a)
+    : "%eax"
+);
+/*
+ * "b" is the output operand referred to by %0 and "a" is the input operand referred to by %1.
+ * "r" is a constraint on the operands that says to GCC to use any register for storing the operands.
+ * "=" says that is output operand and it write-only.
+ * There are two %% prefixed to the register name to helps GCC to distinguish between the operands and registers. operands have a single % as prefix.
+ * The clobbered register %eax tells GCC that the value of %eax is to be modified inside "asm", so GCC won't use this register to store any other value.
+ * When the execution of "asm" is complete. The change made to "b" inside "asm" is supposed to be reflected output the "asm".
+ */
+```
+
+### 汇编器模板(Assembler Temmplate)
+
+```assembly
+; Example 1
+"mov1 %%1, %%eax;
+ mov1 %%eax, %0;"
+
+; Example 2
+"mov1 %%1, %%eax \n\t"
+"mov1 %%eax, %0 \n\t"
+```
+
+### 操作数(Operands)
+
+格式：```"constraint" (C expression)```
+
+在汇编器模板中每个操作数通过数字引用，包括输出和输入操作数从0开始依次依序递增。假设总计有n个操作数则第一个输出操作数为%0，最后一个输入操作数为 %n-1。
+
+输出操作数必须是一个左值。输入则不限定。如果输出操作数不能直接寻址，可以使用一个寄存器，这时候GCC将使用这个寄存器作为输出并随后存储该寄存器值。
+
+```assembly
+; void func(int* v, int x) {
+; *v = x + x * 4;
+	asm(
+		"leal (%1, %1, 4), %0"
+		: "=r" (*v)
+		: "r" (x) 
+	);
+;}
+```
+
+输入和输出使用相同寄存器，不指定特定寄存器
+
+```assembly
+; void func(int* v, int x) {
+; *v = x + x * 4;
+	asm(
+		"leal (%0, %0, 4), %0"
+		: "=r" (*v)
+		: "0" (x) 
+	);
+;}
+```
+
+输入和输出使用相同寄存器，指定特定寄存器
+
+```assembly
+; void func(int* v, int x) {
+; *v = x + x * 4;
+	asm(
+		"leal (%%ecx, %%ecx, 4), %%ecx"
+		: "=c" (*v)
+		: "c" (x) 
+	);
+;}
+```
+
+### 变更列表（Clobber List）
+
+
+
+### Volatile
+
