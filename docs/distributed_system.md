@@ -102,3 +102,10 @@
       Eventually consistent - 不保证数据强一致性
     
     - BASE: An Acid Alternative(Dan Pritchett@Ebay 2008)
+
+## 引用
+
+[^1]:[Harvest, Yield, and Scalable Tolerant Systems](docs/ds/10.1.1.33.411.pdf)
+[^2]:[In Search of an Understandable Consensus Algorithm](docs/ds/raft.pdf)
+[^3]:[ZooKeeper: Wait-free coordination for Internet-scale systems](docs/ds/zookeeper.pdf)
+
