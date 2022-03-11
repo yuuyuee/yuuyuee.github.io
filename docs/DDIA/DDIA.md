@@ -6,4 +6,3 @@
 | --------------------- | -------------- | ------ |
 | Relationship Database | Log Based      |        |
 | NoSQL                 | Page Oriented  |        |
-
