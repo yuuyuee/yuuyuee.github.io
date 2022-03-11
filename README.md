@@ -5,4 +5,4 @@
 * [Distributed System](docs/distributed_system.md)
 * [Consistency Protocol](docs/consistency_protocol.md)
 * [Distribute System Technology Stack](docs/ds_index.md)
-* [Designing Data_Intensive Applications](docs/DDIA/index.md)
+* [Designing Data-Intensive Applications](docs/DDIA/index.md)
