@@ -3,7 +3,7 @@
 * 向后兼容 - 较旧的代码能够读取新代码写的数据
 ```
 
-# 数据编码模式
+# 数据编码
 
 ## 语言特定的格式
 
@@ -30,9 +30,9 @@ JSON XML和CSV都是文本格式，优点是可读性。JSON XML和CSV在作为�
 
 #### JSON XML二进制格式
 
-JSON二进制编码格式: MessagePack, BSON, BJSON, UBJSON, BISON
+JSON二进制编码格式: MessagePack[^1], BSON, BJSON, UBJSON, BISON
 
-[MessagePack 编码格式](http://i5ting.github.io/msgpack-specification/)
+[^1]:[MessagePack 编码格式](http://i5ting.github.io/msgpack-specification/)
 
 XML二进制编码格式：WBX, Fast Infoset
 
@@ -44,7 +44,6 @@ Apache Thrift和Protocol Buffers是基于相同原理的两种二进制库。
 
 ##### 数值压缩
 
-```
 * Variant - variant是一种数值编码，数字越小，存储所需字节越少
 数值被被以7位分割，高位补1表示后续字节仍是数值的一部分，补0表示数值编码结束，采用低字节补齐到高字节。
 示例： 300 = 0000 0000 0000 0000 0000 0001 0010 1100
@@ -52,11 +51,10 @@ Apache Thrift和Protocol Buffers是基于相同原理的两种二进制库。
 
 * Zigzag - 用于将有符号数映射到无符号数的一种方法，以解决Variant编码负数效率低的问题
 编码时候将数值循环左移1位，解码时将数值循环右移1位。
-32位Zigzag编码： Nzigzag = (N << 1) ^ (N >> 31)
-32位Zigzag解码： N = (Nzigzag >> 1) ^ -static_cast<int32>(Nzigzag & 1)
-64位Zigzag编码： Nzigzag = (N << 1) ^ (N >> 63)
-64位Zigzag解码： N = (Nzigzag >> 1) ^ -static_cast<int64>(Nzigzag & 1)
-```
+32位Zigzag编码： ```Nzigzag = (N << 1) ^ (N >> 31)```
+32位Zigzag解码： ```N = (Nzigzag >> 1) ^ -static_cast<int32>(Nzigzag & 1)```
+64位Zigzag编码： ```Nzigzag = (N << 1) ^ (N >> 63)```
+64位Zigzag解码： ```N = (Nzigzag >> 1) ^ -static_cast<int64>(Nzigzag & 1)```
 
 ##### 接口定义语言
 
@@ -74,6 +72,24 @@ PB和Thrift都是语言无关的，通过接口定义语言（IDL）来定义模
 
 #### Avro
 
+Avro也使用模式指定编码的数据结构，支持Avro IDL和基于JSON的两种模式语言。
+
+Avro是所有编码中最紧凑的，它没有标识字段和数据类型，编码是一系列连在一起的值组成的（字符串有长度前缀），解析时，按照模式中的顺序遍历这些字段，只有在读写模式匹配时才能解码数据。
+
+Avro模式分为写模式和读模式，Avro的关键思想是：写模式和读模式只需保持兼容，不必完全一样。当解码时，为了解决读模式与写模式的差异，Avro通过对比读模式与写模式，并将数据从写模式转换为读模式[^2]。
+
+[^2]: [Avro模式解析](https://avro.apache.org/docs/current/spec.html#Schema+Resolution)
+
+Avro为了保持兼容性，只能添加删除具有默认值的字段。添加没有默认值的字段，新的reader无法读取旧的writer写的数据，破坏了向后兼容性；删除没有默认值的字段，旧的reader无法读取新的writer写的数据，破坏了向前兼容性。
+
+Avro中如果字段类型时可转换的，就可以改变字段的数据类型而不破坏兼容性。修改字段名称（通过字段别名）是向后兼容的，但不能向前兼容；向联合类型添加类型也是向后兼容的，但不能向前兼容。
+
+当文件保存记录时，Avro把写模式写道文件头中以用于reader读取记录；当记录保存到数据库中，单独维护模式版本列表，reader可以通过模式版本号来读取数据；通过网络发送记录时可以在建立连接时协商模式版本，并在连接的生命周期内使用该模式。
+
+Avro不同于PB和Thrift，它不包含任何标签，这对于动态生成的模式更友好。这种动态生成模式的能不是PB和Thrift的设计目标，而是Avro的设计目标。
+
 ## 模式的优点（总结）
+
+JSON, XML, CSV等文本的，无模式/读时模式有其简单性，灵活性，可读性；PB和Thrift则通过支持演化具备了其灵活性，并在大规模数据场景上表现更加；Avro则在数据紧凑和动态生成模式方面做到了极致。
 
 # 数据流模式
