@@ -36,6 +36,8 @@
 
 ```https://dancres.github.io/Pages/```
 
+```https://martinfowler.com/articles/patterns-of-distributed-systems/```
+
 ### 分布式理论导读
 
 1. 起源 （互斥执行/面包店问题）
