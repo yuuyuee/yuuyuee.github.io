@@ -34,8 +34,6 @@ zkid：zk事务ID，状态的每次变更都会收到一个zxid表示变更总�
 2. cversion znode子节点变更次数
 3. aversion znode ACL变更次数
 
-
-
 ## zk znode Stat
 
 czxid：创建znode的更改zxid
@@ -60,13 +58,9 @@ dataLength：znode数据长度
 
 numChildren：znode子节点数量
 
-
-
 ## zk会话
 
 ![](zk\state_dia.jpg)
-
-
 
 ## 如何处理CONNECTION_LOSS错误
 
@@ -124,25 +118,19 @@ admin.enableServer=[true|false]：启用/禁用管理页面
 
 admin.serverPort=8080：管理页面端口
 
-
-
 zookeeper-env.sh
 
-​	ZOO_LOG_DIR：日志目录
+​ZOO_LOG_DIR：日志目录
 
-​	ZOO_LOG_FILE：日志文件名
+​ZOO_LOG_FILE：日志文件名
 
 java-env.sh
-
-
 
 ## 启动zk服务
 
 ```bash
 ./zkServer.sh [--config <conf-dir>] {start|stop|version|restart|status|print-cmd}
 ```
-
-
 
 ## 启动zk客户端
 
@@ -181,11 +169,9 @@ zk集群主要目的时获得可靠的zk服务，只要多数服务器可用，�
 
 6. 启动zookeeper服务
 
+   ```bash
+   zkServer.sh --config <config-dir> start
    ```
-   $ zkServer.sh --config <config-dir> start
-   ```
-
-
 
 ## 日志清理
 
@@ -195,17 +181,13 @@ zk集群主要目的时获得可靠的zk服务，只要多数服务器可用，�
 
 2. 手动清理
 
+```bash
+zkCleanup.sh --config <config-dir> -n <count>
 ```
-$ zkCleanup.sh --config <config-dir> -n <count>
-```
-
-
 
 ## 故障恢复
 
 当遇到文件损坏等故障导致服务无法启动时，**在确认整体的所有其他服务器都已启动**后，可以删除datadir/version-2和datalogdir/version-2中所有文件并重启服务。
-
-
 
 ## 配置参数
 
@@ -276,8 +258,6 @@ $ zkCleanup.sh --config <config-dir> -n <count>
 | learner.asyncSending                                | zookeeper.learner.asyncSending                    | 3.7.0    | 启用独立异步发送线程，默认false                              |
 |                                                     |                                                   |          |                                                              |
 
-
-
 ### 集群配置
 
 | 配置                              | Java系统属性                          | 启用版本 | 注释                                                         |
@@ -301,19 +281,13 @@ $ zkCleanup.sh --config <config-dir> -n <count>
 | localSessionsEnabled              |                                       |          | 默认值false；是否启用本地会话                                |
 | localSessionsUpgradingEnabled     |                                       |          | 默认值false；是否自动将本地会话升级为全局会话                |
 
-
-
 ### 加密/认证配置
-
-
 
 ### 实验性配置
 
 | 配置     | Java系统属性        | 启用版本 | 注释      |
 | -------- | ------------------- | -------- | --------- |
 | 只读模式 | readonlymode.enable | 3.4.0    | 默认false |
-
-
 
 ### 危险配置
 
@@ -330,8 +304,6 @@ $ zkCleanup.sh --config <config-dir> -n <count>
 |                                       |                                                              |          |                                                              |
 |                                       |                                                              |          |                                                              |
 
-
-
 ### 调试配置
 
 | 配置                | Java系统属性                        | 启用版本 | 注释            |
@@ -343,8 +315,6 @@ $ zkCleanup.sh --config <config-dir> -n <count>
 | admin.serverPort    | zookeeper.admin.serverPort          |          | 默认值8080      |
 | admin.idleTimeout   | zookeeper.admin.idleTimeout         |          | 默认值30000毫秒 |
 | admin.commandURL    | zookeeper.admin.commandURL          |          | 默认值/commands |
-
-
 
 ### 指标提供者
 
@@ -416,7 +386,7 @@ observer致力于进一步提高zk的可扩展性。它与follower一样接受�
 
 ### 配置observer
 
-```
+```bash
 # 指示zk服务器将是一个observer
 peerType=observer
 
@@ -434,7 +404,7 @@ observerMasterPort=2191
 
 从3.5.0开始，不应该使用clientPort和clientPortAddress配置参数，此信息现在是服务器关键字规范的一部分：server，group，weight
 
-```
+```bash
 # server.<myid>=<address>:<quorum-port>:<election-port>[:role];[<client-port-address>:]<client-port>
 server.1=0.0.0.0:1234:1235;1236
 server.1=0.0.0.0:1234:1235:participant;1236 # follower(默认值)
@@ -445,19 +415,19 @@ server.5=0.0.0.0:1234:1235:participant;x.x.x.x:1236
 
 启用集群模式
 
-```
+```bash
 standaloneEnabled=false # 静态配置
 ```
 
 [3.5.0, 3.5.3)无法禁用动态重新配置功能，3.5.3+版本可通过一下配置启用/禁用动态重新配置功能。
 
-```
+```bash
 reconfigEnabled=true
 ```
 
 动态配置文件
 
-```
+```bash
 # zoo_replicated1.cfg <静态配置>
 tickTime=2000
 dataDir=/zookeeper/data/zookeeper1
@@ -473,9 +443,9 @@ server.2=x.x.x.x:1234:1235:participant;1236
 
 检索动态配置
 
-```
-$ sync
-$ config
+```bash
+sync
+config
 
 zk.sync(zooDefs.CONFIG_NODE, callback, context);
 zk.getConfig(watcher, callback, context);
@@ -485,27 +455,22 @@ zk.getConfig(watcher, callback, context);
 
 > 增量重新配置模式：指定对当前配置的更改。
 
-```
-$ reconfig -remove 3 -add
+```bash
+reconfig -remove 3 -add
   server.5=x.x.x.x:2111:2112,6=localhost:2114:2115:observer;2116
 ```
 
-
-
 > 批量重新配置模式：仅指定系统的新动态配置。
 
+```bash
+reconfig -file newconfig.cfg // newconfig.cfg 是动态配置文件
+
+reconfig -member server.1=x.x.x.x:1234:1235:participant;1236,server.2=x.x.x.x:1237:1238:observer;1239
 ```
-$ reconfig -file newconfig.cfg // newconfig.cfg 是动态配置文件
-
-$ reconfig -member server.1=x.x.x.x:1234:1235:participant;1236,server.2=x.x.x.x:1237:1238:observer;1239
-```
-
-
 
 ## 审计日志
 
-```
+```bash
 # zoo.cfg
 audit.enable=true
 ```
-

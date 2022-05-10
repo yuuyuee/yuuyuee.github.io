@@ -393,4 +393,3 @@ type name(type1 arg1,type2 arg2,type3 arg3) \
              );
 }
 ```
-
