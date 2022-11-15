@@ -56,7 +56,7 @@ Behavioral design patterns are concerned with algorithms and the assignment of r
 
 ### Visitor
 
-Visitor is a behavioral design pattern that lets you separate algorithms from the objects on which they operate. Visitor is a powerful version of the Command pattern. Its objects can execute operations over various objects of different classes.
+Visitor is a behavioral design pattern that lets you separate algorithms from the objects on which they operate.
 
 ![Visitor Structure](design_patterns/visitor.png)
 
@@ -129,4 +129,4 @@ class ConcreteElementB: public Element {
 * Use the Visitor when you need to perform an operation on all elements of a complex object structure (for example, an object tree).
 * Use the Visitor to clean up the business logic of auxiliary behaviors.
 * Use the pattern when a behavior makes sense only in some classes of a class hierarchy, but not in others.
-*
+* Visitor is a powerful version of the Command pattern. Its objects can execute operations over various objects of different classes.
