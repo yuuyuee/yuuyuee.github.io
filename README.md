@@ -1,4 +1,4 @@
-## Notes
+# Notes
 
 * [GCC Inline Assembly](docs/inline_assembly.md)
 * [Zookeeper](docs/zk.md)
