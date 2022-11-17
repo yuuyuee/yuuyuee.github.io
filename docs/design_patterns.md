@@ -40,6 +40,93 @@ Behavioral design patterns are concerned with algorithms and the assignment of r
 
 ### Command
 
+Command is a behavioral design pattern that turns a request into a stand-alone object that contains all information about the request. This transformation can pass requests as a method arguments, delay or queue a request’s execution, and support undoable operations.
+
+![Command Structure](design_patterns/command.png)
+
+1. The **Sender** class (aka invoker) is responsible for initiating requests. This class must have a field for storing a reference to a command object. The sender triggers that command instead of sending the request directly to the receiver. Note that the sender isn’t responsible for creating the command object. Usually, it gets a pre-created command from the client via the constructor.
+
+2. The **Command** interface usually declares just a single method for executing the command.
+
+3. **Concrete Commands** implement various kinds of requests. A concrete command isn’t supposed to perform the work on its own, but rather to pass the call to one of the business logic objects. However, for the sake of simplifying the code, these classes can be merged.
+Parameters required to execute a method on a receiving object can be declared as fields in the concrete command. You can make command objects immutable by only allowing the initialization of these fields via the constructor.
+
+4. The **Receiver** class contains some business logic. Almost any object may act as a receiver. Most commands only handle the details of how a request is passed to the receiver, while the receiver itself does the actual work.
+
+5. The **Client** creates and configures concrete command objects. The client must pass all of the request parameters, including a receiver instance, into the command’s constructor. After that, the resulting command may be associated with one or multiple senders.
+
+```cpp
+class Receiver {
+ public:
+  void Operation(int a, int b, int c) {
+    // The Receiver classes contain some important business logic.
+    // They know how to perform all kinds of operations, associated with carrying out a request.
+  }
+};
+
+// The Command interface declares a method for executing a command.
+class Command {
+ public:
+  virtual ~Command() {}
+
+  virtual void Execute() = 0;
+};
+
+class ConcreteCommand: public Command {
+ public:
+  ConcreteCommand(Receiver* receiver, int a, int b, int c)
+    : receiver_(receiver), a_(a), b_(b), c_(c) {}
+  virtual ~ConcreteCommand() {}
+
+  // Delegate to methods of a receiver.
+  virtual void Execute() {
+    receiver_->Operation(a_, b_, c_);
+  }
+
+ private:
+  Receiver* receiver_;
+  int a_, b_, c_;
+};
+
+class Invoker {
+ public:
+  Invoker(): command_(nullptr) {}
+  ~Invoker() {
+    if (command_)
+      delete command_;
+  }
+
+  void SetCommand(Command* command) {
+    command_ = command;
+  }
+
+  void ExecuteCommand() {
+    if (command_)
+      command_->Execute();
+  }
+
+ private:
+  Command* command_;
+};
+
+int main() {
+  Receiver receiver;
+  Invoker invoker;
+  invoker.SetCommand(new ConcreteCommand(&receiver, 1, 2, 3));
+  invoker.ExecuteCommand();
+  return 0;
+}
+```
+
+* Use the Command pattern to parametrize objects with operations.
+* Use the Command pattern to queue operations, schedule their execution, or execute them remotely.
+* Use the Command pattern to implement reversible operations.
+* Chain of Responsibility, Command, Mediator and Observer address various ways of connecting senders and receivers of requests:
+  * Chain of Responsibility passes a request sequentially along a dynamic chain of potential receivers until one of them handles it.
+  * Command establishes unidirectional connections between senders and receivers.
+  * Mediator eliminates direct connections between senders and receivers, forcing them to communicate indirectly via a mediator object.
+  * Observer lets receivers dynamically subscribe to and unsubscribe from receiving requests.
+
 ### Iterator
 
 ### Mediator
@@ -56,7 +143,7 @@ Behavioral design patterns are concerned with algorithms and the assignment of r
 
 ### Visitor
 
-Visitor is a behavioral design pattern that lets you separate algorithms from the objects on which they operate.
+Visitor is a behavioral design pattern that can separate algorithms and operates from the objects.
 
 ![Visitor Structure](design_patterns/visitor.png)
 
@@ -80,19 +167,23 @@ class ConcreteElementB;
 // element that it's dealing with.
 class Visitor {
  public:
-  virtual void Visit(const ConcreteElementA*) const {}
-  virtual void Visit(const ConcreteElementB*) const {}
+  virtual ~Visitor() {}
+
+  virtual void Visit(const ConcreteElementA*) const = 0;
+  virtual void Visit(const ConcreteElementB*) const = 0;
 };
 
 class ConcreteVisitor: public Visitor {
  public:
-  virtual void Visit(const ConcreteElementA* element) const override {
+  virtual ~ConcreteVisitor() {}
+
+  virtual void Visit(const ConcreteElementA* element) const {
     // Visitor methods know the concrete type of the element
     // it works with.
     element->FeatureA();
   }
 
-  virtual void Visit(const ConcreteElementB* element) const override {
+  virtual void Visit(const ConcreteElementB* element) const {
     element->FeatureB();
   }
 };
@@ -101,7 +192,8 @@ class ConcreteVisitor: public Visitor {
 // the base visitor interface as an argument.
 class Element {
  public:
-  virtual void Accept(const Visitor*) const {}
+  virtual ~Element() {}
+  virtual void Accept(const Visitor*) const = 0;
 };
 
 // Each concrete element class must implement the `Accept`
@@ -109,24 +201,28 @@ class Element {
 // corresponds to the element's class.
 class ConcreteElementA: public Element {
  public:
+  virtual ~ConcreteElementA() {}
+
   void FeatureA() const {}
 
-  virtual void Accept(const Visitor* visitor) const override {
+  virtual void Accept(const Visitor* visitor) const {
     visitor->Visit(this);
   }
 };
 
 class ConcreteElementB: public Element {
  public:
+  virtual ~ConcreteElementB() {}
+
   void FeatureB() const {}
 
-  virtual void Accept(const Visitor* visitor) const override {
+  virtual void Accept(const Visitor* visitor) const {
     visitor->Visit(this);
   }
 };
 ```
 
-* Use the Visitor when you need to perform an operation on all elements of a complex object structure (for example, an object tree).
+* Use the Visitor when need to perform an operation on all elements of a complex object structure (for example, an object tree).
 * Use the Visitor to clean up the business logic of auxiliary behaviors.
 * Use the pattern when a behavior makes sense only in some classes of a class hierarchy, but not in others.
 * Visitor is a powerful version of the Command pattern. Its objects can execute operations over various objects of different classes.
