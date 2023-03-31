@@ -1,4 +1,11 @@
 
+all: lexer;
 
-flex: lexer.l
+lexer.h lexer.c: lexer.l
 	flex --header-file=lexer.h -o lexer.c $<
+
+lexer: lexer.h lexer.c
+	gcc -Wall -Wextra -g -I. -o $@ $^
+
+clean:
+	rm -rf lexer lexer.h lexer.c
