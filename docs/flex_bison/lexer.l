@@ -13,6 +13,9 @@
 
 %{
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <assert.h>
 #include <stdio.h>
 
 %}
@@ -148,6 +151,7 @@ WS [ \t]+
 
 %{
 printf("start lexical analysis\n");
+int new_lines = 0;
 %}
 
 "+" { /* plus operator */ }
@@ -163,7 +167,7 @@ printf("start lexical analysis\n");
 
 {WS}+ { /* ignore space */ }
 
-"\n" { /* return END; */ }
+"\n" { ++new_lines; /* return END; */ }
 
 . {
     printf("Unrecognized symbol at line %d: %s\n",
@@ -185,7 +189,7 @@ printf("start lexical analysis\n");
 
 
 
-/**
+/* Generate scanner
  * yylex(): This definition may be changed by defining the "YY_DECL" macro.
  * Whenever "yylex" is called, it scans tokens from the global input file
  * "yyin". It continues until it either reaches an EOF or one of its actions
@@ -218,16 +222,35 @@ printf("start lexical analysis\n");
  * The scanner writes its "ECHO" output to the yyout global(default stdout),
  * which may be redefined by the euser simply by assigning it ot some other
  * FILE pointer.
+ *                +---------------<---------------------+
+ *                |                                     |
+ * yylex() -> YY_INPUT() -> EOF ? <TRUE> -> yywrap() <FALSE>
+ *                |               <FALSE>            <TRUE> -> return 0
+ *                + <- scan ---------+
+ *
+ * - YY_USER_INIT calling in the first of yylex()
+ * - YY_USER_ACTION callling in the first of each action
  */
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        printf("Usage: %s express\n", argv[0]);
+        printf("Usage: %s files...\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    const char* s = argv[1];
-    YY_BUFFER_STATE bs = yy_scan_string(s);
-    yylex();
-    yy_delete_buffer(bs);
+
+    for (int i = 1; i < argc; ++i) {
+        const char* fname = argv[i];
+        struct stat state;
+        if (stat(fname, &state) != 0 || state.st_size == 0)
+            continue;
+        char* buf = malloc(state.st_size);
+        YY_BUFFER_STATE bs = yy_scan_buffer(buf, state.st_size);
+        while (yylex() != 0) {
+            /* TODO */
+        }
+        yy_delete_buffer(bs);
+        free(buf);
+    }
+
     return 0;
 }
