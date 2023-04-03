@@ -50,7 +50,6 @@ DIGIT [0-9]
 ALPHA [a-zA-Z]
 WS [ \t]+
 
-
 /**
  * rules section
  */
@@ -147,6 +146,15 @@ WS [ \t]+
   output but its meaning is not well-defined and it may well cause compile-time
   error. */
 
+/* start conditions
+ * Any rule whose pattern is prefixed with "<sc>" will only be active then
+ * the scanner is in the start condition named "sc".
+ * <sc1,sc2,sc3>pattern action
+ * Active only when the current start condition is either "sc1", "sc2" or "sc3".
+ *
+ *
+ */
+
 %%
 
 %{
@@ -184,10 +192,6 @@ int new_lines = 0;
 
 /* The presence of user code section is optional and it is simply copied to
   output verbatim. */
-
-
-
-
 
 /* Generate scanner
  * yylex(): This definition may be changed by defining the "YY_DECL" macro.
