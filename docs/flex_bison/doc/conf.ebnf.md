@@ -1,8 +1,11 @@
 # The syntax of configuration in Extended Backus-Naur form
 
-```
-## 仅行注释
-\[[a-zA-z0-9]{32}\] # 代码开始标签直到文件结尾或下一个开始标签
+```conf
+### 老版本配置
+
+# 代码开始标签直到文件结尾或下一个开始标签
+# 格式: \[[0-1a-z]{32}\]
+[00000000000000000000000000000000]
 
 ## 界面生成的注释
 ## areaCode=320100
@@ -33,14 +36,58 @@ URL=/topic
 # 输出路径控制
 # DESTINATION - 输出目的地
 # TOPIC       - DESTINATION = prepare, 表名
-#             - DESTINATION = prepare, 主题
-# IP          - 输出地址
-DESTINATION=prepare|kafka
+#             - DESTINATION = kafka, 主题
+# DESTINATION=prepare
+# TOPIC=NB_XXL
+# 扩展为以下
+# N_(OEP_ARBI_DESTINATION)=NONE|STRING("prepare")
+# N_(OEP_ARBI_TOPIC)=NONE|STRING("NB_XXL")
+DESTINATION=prepare
 TOPIC=NB_XXL
+
+# IP IP地址
 IP=all
+
+# REGISTERDATA 注册规则
+# 格式: rule1|rule2|...
+REGISTERDATA=xxx
+
+# PROTO 协议
+# 不正确不会加载
+PROTO=98
+
+# ID 配置ID
+ID=123456789
+
+# KEY 关键词
+KEY=82.157.13.125
+
+# POSTRESPONSE
+# 仅反诈加载
+POSTRESPONSE=1
+
+# NEWMASS_ERROR
+# 等于2将不会被加载
+NEWMASS_ERROR=1
+
+# SPECIAL_FLAG 特殊标签
+# 1 - 仅精细化启用
+# 2 - 仅多媒体启用
+# 3 - 仅PK使用
+# 其他 - 禁用
+SPECIAL_FLAG=1
+
+# 字段格式
+# [NMTF]_(name|number)=expression
+# N - 正常输出字段
+# M - 正常输出字段 (输出多次)
+# T - 临时字段, 供其他字段关联
+# F - 标识打包下载
 
 # 非输出字段
 # 格式: T_(name|number)=<source>\|<type|function>(<args[,...]>)[\|...]
+# 数字定义:
+# 998 - 配置ID
 T_(5)   = NONE|STRING(USERID)
 T_(6)   = NONE|STRING(103)
 T_(7)   = NONE|STRING(103)
@@ -64,6 +111,20 @@ N_(FILE_MD5_S)=NONE|STRING(1021)
 N_(USERID)=NONE|STRING(1021)
 N_(URL)=NONE|STRING(1021)
 N_(DOMAIN)=NONE|STRING(1021)
+```
+
+```conf
+### 老版本配置 - 转换成配置语言
+
+# 代码开始标签直到文件结尾或下一个开始标签
+# 格式: \[[0-1a-z]{32}\]
+[00000000000000000000000000000000]
+RUN_VERSION = "8.0.2-"
+DESTINATION="prepare"
+TOPIC="NB_XXL"
+IP="all"
+
+
 ```
 
 ```ebnf
