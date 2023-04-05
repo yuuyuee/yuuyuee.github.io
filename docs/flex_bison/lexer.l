@@ -17,6 +17,9 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#define YY_USER_INIT printf("user init\n");
 
 %}
 
@@ -29,6 +32,12 @@
 /* %option verbose */
 /* %option prefix=oak */
 %pointer
+
+/* start conditions */
+%s START_COND1
+%s START_COND2
+%x START_COND3
+%x START_COND4
 
 /* name definition form
   <name> <definition>
@@ -47,8 +56,7 @@
 */
 
 DIGIT [0-9]
-ALPHA [a-zA-Z]
-WS [ \t]+
+WS [ \t]
 
 /**
  * rules section
@@ -151,36 +159,98 @@ WS [ \t]+
  * the scanner is in the start condition named "sc".
  * <sc1,sc2,sc3>pattern action
  * Active only when the current start condition is either "sc1", "sc2" or "sc3".
+ * Start conditions are declared in the definitions section of the input using
+ * unindented lines beginning with either "%s" or "%x" followed by a list of
+ * names. A start condition is activated using the BEGIN action, Until the next
+ * BEGIN action is executed, rule with the given start condition will be active
+ * and rules with other start conditions will be inactive.
+ * "%s" - inclusive start condition, rules with no start conditions at all will
+ *        also be active.
+ * "%x" - exclusive start condition, only rules qualified with the start
+ *        condition will be active.
+ * A set of rules contingent on the same exclusive start condition describe a
+ * scanner which is independent of any of the other rules in the flex input.
+ * Because of this, exclusive start condition make it easy to specify
+ * "mini-scanners" which scan portions of the input that are syntactically
+ * different from the reset (e.g., comments).
+ * example:
+ * %s example
+ * %%
+ * <examle>foo do_something();
+ * bar         something_else();
+ * is equivalent to:
+ * %x example
+ * %%
+ * <example>foo do_something();
+ * <INITIAL,example>bar something_else();
+ * Note that the special start condition specifier "<*>" matches every start
+ * condition.
+ * The default rule (to ECHO any unmatched character) remains active in start
+ * conditions is equivalent to:
+ * <*>.|\\n ECHO;
+ * BEGIN(0) returns to the original state where only the rules with no start
+ * conditions are active. This state can also be referred to as the start
+ * condition "INITIAL", so BEGIN(INITIAL) is equivalent to BEGIN(0).
+ * BEGIN action can also be given as indented code at the beginning of the
+ * rule section to make scanner to enter the start condition whenever yylex()
+ * is called.
+ *    int enter_special;
+ * %x SPECIAL
+ * %%
+ *    if (enter_special)
+ *      BEGIN(SPECIAL);
+ * <SPECIAL>...
  *
+ * Note that start conditons names are really integer values and can be stored.
+ * its can access the current start condition using the integer valued "YY_START"
+ * macros. start condition do not have their own name-space; "%s" and "%x" declare
+ * names in the same fashion as #define's.
+ * start condition scope may be nested.
+ * <SCs>{
+ *    pattern action
+ *    ...
+ * }
  *
+ * Three routines are available for mainipulating stacks of start conditions:
+ * void yy_push_state(int new_state) - pushes the current start condition onto
+ * the top of the start condition stack and swithces to new_state.
+ * like as BEGIN(new_state);
+ * void yy_pop_state() - pops the top of teh stack and switches to it via BEGIN.
+ * int yy_top_state() - returns the top of the stack without altering the contents.
+ * The start condition stack grows dynamically and so has not size limitation.
+ * if memory is exhausted, program execution aborts.
+ * To use start condition stacks, your scanner must include a "%option stack"
+ * directive.
  */
 
 %%
 
 %{
-printf("start lexical analysis\n");
-int new_lines = 0;
+// printf("start lexical analysis\n");
 %}
 
-"+" { /* plus operator */ }
-
-("0x"|"0X")+[0-9a-fA-F]+ {
-    printf("Saw an hexadeciaml digit: %s\n", yytext);
+{WS}+ {
+  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
+  // return 1;
 }
 
 {DIGIT}+ {
-    printf("Saw an integer: %s\n", yytext);
-    /* return NUMBER; */
+  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
+  // return 2;
 }
 
-{WS}+ { /* ignore space */ }
-
-"\n" { ++new_lines; /* return END; */ }
+[a-z]+ {
+  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
+  // return 3;
+}
 
 . {
-    printf("Unrecognized symbol at line %d: %s\n",
-            yylineno, yytext);
-    /* exit(0); */
+  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
+  // return 4;
+}
+
+<<EOF>> {
+  yyterminate();
 }
 
 %% /* if user code section is missing, the second "%%" may be skipped. */
@@ -237,7 +307,7 @@ int new_lines = 0;
  */
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
+    if (argc < 2) {
         printf("Usage: %s files...\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -248,7 +318,15 @@ int main(int argc, char* argv[]) {
         if (stat(fname, &state) != 0 || state.st_size == 0)
             continue;
         char* buf = malloc(state.st_size);
-        YY_BUFFER_STATE bs = yy_scan_buffer(buf, state.st_size);
+        FILE* fp = fopen(fname, "rb");
+        if (fread(buf, state.st_size, 1, fp) != 1) {
+          printf("read file %s failed\n", fname);
+          free(buf);
+          fclose(fp);
+          continue;
+        }
+        fclose(fp);
+        YY_BUFFER_STATE bs = yy_scan_bytes(buf, state.st_size);
         while (yylex() != 0) {
             /* TODO */
         }
