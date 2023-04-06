@@ -1,227 +1,280 @@
 # The syntax of C in Backus-Naur form
 
 ```EBNF
-<translation-unit> ::= {<external-declaration>}*
+(* conf form language, version 0.1 *)
 
-<external-declaration> ::= <function-definition>
-                         | <declaration>
+translation-unit = {external-declaration};
 
-<function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+external-declaration = function-definition
+                     | declaration;
 
-<declaration-specifier> ::= <storage-class-specifier>
-                          | <type-specifier>
-                          | <type-qualifier>
+function-definition = declaration-specifiers, declarator, [declaration-list], compound-statement;
 
-<storage-class-specifier> ::= auto
-                            | register
-                            | static
-                            | extern
-                            | typedef
+declaration = declaration-specifiers, [init-declarator-list], ';'
+            | static-assert-declaration
+            | ';';
 
-<type-specifier> ::= void
-                   | char
-                   | short
-                   | int
-                   | long
-                   | float
-                   | double
-                   | signed
-                   | unsigned
-                   | <struct-or-union-specifier>
-                   | <enum-specifier>
-                   | <typedef-name>
+declaration-specifiers = declaration-specifier, {declaration-specifier};
 
-<struct-or-union-specifier> ::= <struct-or-union> <identifier> { {<struct-declaration>}+ }
-                              | <struct-or-union> { {<struct-declaration>}+ }
-                              | <struct-or-union> <identifier>
+declaration-specifier = storage-class-specifier
+                      | type-specifier
+                      | type-qualifier
+                      | function-specifier
+                      | alignment-specifier;
 
-<struct-or-union> ::= struct
-                    | union
+declarator = [pointer], direct-declarator;
 
-<struct-declaration> ::= {<specifier-qualifier>}* <struct-declarator-list>
+declaration-list = declaration, {declaration};
 
-<specifier-qualifier> ::= <type-specifier>
-                        | <type-qualifier>
+compound-statement = '{', {declaration-or-statement}, '}';
 
-<struct-declarator-list> ::= <struct-declarator>
-                           | <struct-declarator-list> , <struct-declarator>
+declaration-or-statement = declaration | statement;
 
-<struct-declarator> ::= <declarator>
-                      | <declarator> : <constant-expression>
-                      | : <constant-expression>
+init-declarator-list = init-declarator, {',', init-declarator};
 
-<declarator> ::= {<pointer>}? <direct-declarator>
+init-declarator = declarator, ['=', initializer];
 
-<pointer> ::= * {<type-qualifier>}* {<pointer>}?
+static-assert-declaration = '_Static_assert', '(', constant-expression, ',', string-literal, ')', ';';
 
-<type-qualifier> ::= const
-                   | volatile
+storage-class-specifier = 'typedef'
+                        | 'extern'
+                        | 'static'
+                        | '_Thread_local'
+                        | 'auto'
+                        | 'register';
 
-<direct-declarator> ::= <identifier>
-                      | ( <declarator> )
-                      | <direct-declarator> [ {<constant-expression>}? ]
-                      | <direct-declarator> ( <parameter-type-list> )
-                      | <direct-declarator> ( {<identifier>}* )
+type-specifier = 'void'
+               | 'char'
+               | 'short'
+               | 'int'
+               | 'long'
+               | 'float'
+               | 'double'
+               | 'signed'
+               | 'unsigned'
+               | '_Bool'
+               | '_Complex'
+               | '_Imaginary'       (* non-mandated extension *)
+               | atomic-type-specifier
+               | struct-or-union-specifier
+               | enum-specifier
+               | typedef-name;
 
-<constant-expression> ::= <conditional-expression>
+(* NOTE: Please define typedef-name as result of 'typedef'. *)
+typedef-name = identifier;
 
-<conditional-expression> ::= <logical-or-expression>
-                           | <logical-or-expression> ? <expression> : <conditional-expression>
+type-qualifier = 'const'
+               | 'restrict'
+               | 'volatile'
+               | '_Atomic';
 
-<logical-or-expression> ::= <logical-and-expression>
-                          | <logical-or-expression> || <logical-and-expression>
+function-specifier = 'inline'
+                   | '_Noreturn';
 
-<logical-and-expression> ::= <inclusive-or-expression>
-                           | <logical-and-expression> && <inclusive-or-expression>
+alignment-specifier = '_Alignas', '(', type-name, ')'
+                    | '_Alignas', '(', constant-expression, ')';
 
-<inclusive-or-expression> ::= <exclusive-or-expression>
-                            | <inclusive-or-expression> | <exclusive-or-expression>
+pointer = '*', [type-qualifier-list], [pointer];
 
-<exclusive-or-expression> ::= <and-expression>
-                            | <exclusive-or-expression> ^ <and-expression>
+direct-declarator = identifier
+                  | '(', declarator, ')'
+                  | direct-declarator, '[', ['*'], ']'
+                  | direct-declarator, '[', 'static', [type-qualifier-list], assignment-expression, ']'
+                  | direct-declarator, '[', type-qualifier-list, ['*'], ']'
+                  | direct-declarator, '[', type-qualifier-list, ['static'], assignment-expression, ']'
+                  | direct-declarator, '[', assignment-expression, ']'
+                  | direct-declarator, '(', parameter-type-list, ')'
+                  | direct-declarator, '(', identifier-list, ')'
+                  | direct-declarator, '(', ')';
 
-<and-expression> ::= <equality-expression>
-                   | <and-expression> & <equality-expression>
+identifier-list = identifier, {',', identifier};
 
-<equality-expression> ::= <relational-expression>
-                        | <equality-expression> == <relational-expression>
-                        | <equality-expression> != <relational-expression>
+initializer-list = designative-initializer, {',', designative-initializer};
 
-<relational-expression> ::= <shift-expression>
-                          | <relational-expression> < <shift-expression>
-                          | <relational-expression> > <shift-expression>
-                          | <relational-expression> <= <shift-expression>
-                          | <relational-expression> >= <shift-expression>
+designative-initializer = [designation], initializer;
 
-<shift-expression> ::= <additive-expression>
-                     | <shift-expression> << <additive-expression>
-                     | <shift-expression> >> <additive-expression>
+initializer = '{', initializer-list, [','], '}'
+            | assignment-expression;
 
-<additive-expression> ::= <multiplicative-expression>
-                        | <additive-expression> + <multiplicative-expression>
-                        | <additive-expression> - <multiplicative-expression>
+constant-expression = conditional-expression;  (* with constraints *)
 
-<multiplicative-expression> ::= <cast-expression>
-                              | <multiplicative-expression> * <cast-expression>
-                              | <multiplicative-expression> / <cast-expression>
-                              | <multiplicative-expression> % <cast-expression>
+atomic-type-specifier = '_Atomic', '(', type-name, ')';
 
-<cast-expression> ::= <unary-expression>
-                    | ( <type-name> ) <cast-expression>
+struct-or-union-specifier = struct-or-union, '{', struct-declaration-list, '}'
+                          | struct-or-union, identifier, ['{', struct-declaration-list, '}'];
 
-<unary-expression> ::= <postfix-expression>
-                     | ++ <unary-expression>
-                     | -- <unary-expression>
-                     | <unary-operator> <cast-expression>
-                     | sizeof <unary-expression>
-                     | sizeof <type-name>
+struct-or-union = 'struct'
+                | 'union';
 
-<postfix-expression> ::= <primary-expression>
-                       | <postfix-expression> [ <expression> ]
-                       | <postfix-expression> ( {<assignment-expression>}* )
-                       | <postfix-expression> . <identifier>
-                       | <postfix-expression> -> <identifier>
-                       | <postfix-expression> ++
-                       | <postfix-expression> --
+struct-declaration-list = struct-declaration, {struct-declaration};
 
-<primary-expression> ::= <identifier>
-                       | <constant>
-                       | <string>
-                       | ( <expression> )
+struct-declaration = specifier-qualifier-list, ';'     (* for anonymous struct/union *)
+                   | specifier-qualifier-list, struct-declarator-list, ';'
+                   | static-assert-declaration;
 
-<constant> ::= <integer-constant>
-             | <character-constant>
-             | <floating-constant>
-             | <enumeration-constant>
+enum-specifier = 'enum', '{', enumerator-list, [','], '}'
+               | 'enum', identifier, ['{', enumerator-list, [','], '}'];
 
-<expression> ::= <assignment-expression>
-               | <expression> , <assignment-expression>
+enumerator-list = enumerator, {',', enumerator};
 
-<assignment-expression> ::= <conditional-expression>
-                          | <unary-expression> <assignment-operator> <assignment-expression>
+(* NOTE: Please define enumeration-constant for identifier inside enum { ... }. *)
+enumerator = enumeration-constant, ['=', constant-expression];
 
-<assignment-operator> ::= =
-                        | *=
-                        | /=
-                        | %=
-                        | +=
-                        | -=
-                        | <<=
-                        | >>=
-                        | &=
-                        | ^=
-                        | |=
+enumeration-constant = identifier;
 
-<unary-operator> ::= &
-                   | *
-                   | +
-                   | -
-                   | ~
-                   | !
+type-name = specifier-qualifier-list, [abstract-declarator];
 
-<type-name> ::= {<specifier-qualifier>}+ {<abstract-declarator>}?
+specifier-qualifier-list = specifier-qualifier, {specifier-qualifier};
 
-<parameter-type-list> ::= <parameter-list>
-                        | <parameter-list> , ...
+specifier-qualifier = type-specifier | type-qualifier;
 
-<parameter-list> ::= <parameter-declaration>
-                   | <parameter-list> , <parameter-declaration>
+abstract-declarator = pointer, [direct-abstract-declarator]
+                    | direct-abstract-declarator;
 
-<parameter-declaration> ::= {<declaration-specifier>}+ <declarator>
-                          | {<declaration-specifier>}+ <abstract-declarator>
-                          | {<declaration-specifier>}+
+direct-abstract-declarator = '(', abstract-declarator, ')'
+                           | '(', parameter-type-list, ')'
+                           | '(', ')'
+                           | '[', ['*'], ']'
+                           | '[', 'static', [type-qualifier-list], assignment-expression, ']'
+                           | '[', type-qualifier-list, [['static'], assignment-expression], ']'
+                           | '[', assignment-expression, ']'
+                           | direct-abstract-declarator, '[', ['*'], ']'
+                           | direct-abstract-declarator, '[', 'static', [type-qualifier-list], assignment-expression, ']'
+                           | direct-abstract-declarator, '[', type-qualifier-list, [['static'], assignment-expression], ']'
+                           | direct-abstract-declarator, '[', assignment-expression, ']'
+                           | direct-abstract-declarator, '(', parameter-type-list, ')'
+                           | direct-abstract-declarator, '(', ')';
 
-<abstract-declarator> ::= <pointer>
-                        | <pointer> <direct-abstract-declarator>
-                        | <direct-abstract-declarator>
+struct-declarator-list = struct-declarator, {',', struct-declarator};
 
-<direct-abstract-declarator> ::=  ( <abstract-declarator> )
-                               | {<direct-abstract-declarator>}? [ {<constant-expression>}? ]
-                               | {<direct-abstract-declarator>}? ( {<parameter-type-list>}? )
+type-qualifier-list = type-qualifier, {type-qualifier};
 
-<enum-specifier> ::= enum <identifier> { <enumerator-list> }
-                   | enum { <enumerator-list> }
-                   | enum <identifier>
+parameter-type-list = parameter-list, [',', '...'];
 
-<enumerator-list> ::= <enumerator>
-                    | <enumerator-list> , <enumerator>
+struct-declarator = ':', constant-expression
+                  | declarator, [':', constant-expression];
 
-<enumerator> ::= <identifier>
-               | <identifier> = <constant-expression>
+assignment-operator = '='
+                    | '*='
+                    | '/='
+                    | '%='
+                    | '+='
+                    | '-='
+                    | '<<='
+                    | '>>='
+                    | '&='
+                    | '^='
+                    | '|=';
 
-<typedef-name> ::= <identifier>
+parameter-list = parameter-declaration, {',', parameter-declaration};
 
-<declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
+parameter-declaration = declaration-specifiers, [declarator | abstract-declarator];
 
-<init-declarator> ::= <declarator>
-                    | <declarator> = <initializer>
+expression = assignment-expression, {',', assignment-expression};
 
-<initializer> ::= <assignment-expression>
-                | { <initializer-list> }
-                | { <initializer-list> , }
+assignment-expression = conditional-expression
+                      | unary-expression, assignment-operator, assignment-expression;
 
-<initializer-list> ::= <initializer>
-                     | <initializer-list> , <initializer>
+conditional-expression = logical-or-expression, ['?', expression, ':', conditional-expression];
 
-<compound-statement> ::= { {<declaration>}* {<statement>}* }
+logical-or-expression = logical-and-expression, {'||', logical-and-expression};
 
-<statement> ::= <labeled-statement>
-              | <expression-statement>
-              | <compound-statement>
-              | <selection-statement>
-              | <iteration-statement>
+logical-and-expression = inclusive-or-expression, {'&&', inclusive-or-expression};
 
-<labeled-statement> ::= <identifier> : <statement>
-                      | case <constant-expression> : <statement>
-                      | default : <statement>
+inclusive-or-expression = exclusive-or-expression, {'|', exclusive-or-expression};
 
-<expression-statement> ::= {<expression>}? ;
+exclusive-or-expression = and-expression, {'^', and-expression};
 
-<selection-statement> ::= if ( <expression> ) <statement>
-                        | if ( <expression> ) <statement> else <statement>
-                        | switch ( <expression> ) <statement>
+and-expression = equality-expression, {'&', equality-expression};
 
-<iteration-statement> ::= while ( <expression> ) <statement>
-                        | do <statement> while ( <expression> ) ;
-                        | for ( {<expression>}? ; {<expression>}? ; {<expression>}? ) <statement>
+equality-expression = relational-expression, {('==' | '!='), relational-expression};
+
+relational-expression = shift-expression, {('<' | '>' | '<=' | '>='), shift-expression};
+
+shift-expression = additive-expression, {('<<' | '>>'), additive-expression};
+
+additive-expression = multiplicative-expression, {('+' | '-'), multiplicative-expression};
+
+multiplicative-expression = cast-expression, {('*' | '/' | '%'), cast-expression};
+
+cast-expression = unary-expression
+                | '(', type-name, ')', cast-expression;
+
+unary-expression = postfix-expression
+                 | ('++' | '--'), unary-expression
+                 | unary-operator, cast-expression
+                 | 'sizeof', unary-expression
+                 | 'sizeof', '(', type-name, ')'
+                 | '_Alignof', '(', type-name, ')';
+
+postfix-expression = primary-expression
+                   | postfix-expression, '[', expression, ']'
+                   | postfix-expression, '(', [argument-expression-list], ')'
+                   | postfix-expression, ('.' | '->'), identifier
+                   | postfix-expression, ('++' | '--')
+                   | '(', type-name, ')', '{', initializer-list, [','], '}';
+
+unary-operator = '&'
+               | '*'
+               | '+'
+               | '-'
+               | '~'
+               | '!';
+
+primary-expression = identifier
+                   | constant
+                   | string
+                   | '(', expression, ')'
+                   | generic-selection;
+
+argument-expression-list = assignment-expression, {',', assignment-expression};
+
+constant = integer-constant
+         | character-constant
+         | floating-constant
+         | enumeration-constant;
+
+string = string-literal
+       | '__func__';
+
+generic-selection = '_Generic', '(', assignment-expression, ',', generic-assoc-list, ')';
+
+generic-assoc-list = generic-association, {',', generic-association};
+
+generic-association = type-name, ':', assignment-expression
+                    | 'default', ':', assignment-expression;
+
+designation = designator-list, '=';
+
+designator-list = designator, {designator};
+
+designator = '[', constant-expression, ']'
+           | '.', identifier;
+
+statement = labeled-statement
+          | compound-statement
+          | expression-statement
+          | selection-statement
+          | iteration-statement
+          | jump-statement;
+
+labeled-statement = identifier, ':', statement
+                  | 'case', constant-expression, ':', statement
+                  | 'default', ':', statement;
+
+expression-statement = [expression], ';';
+
+selection-statement = 'if', '(', expression, ')', statement, 'else', statement
+                    | 'if', '(', expression, ')', statement
+                    | 'switch', '(', expression, ')', statement;
+
+ iteration-statement = 'while', '(', expression, ')', statement
+                     | 'do', statement, 'while', '(', expression, ')', ';'
+                     | 'for', '(', [expression], ';', [expression], ';', [expression], ')', statement
+                     | 'for', '(', declaration, [expression], ';', [expression], ')', statement;
+
+jump-statement = 'goto', identifier, ';'
+               | 'continue', ';'
+               | 'break', ';'
+               | 'return', [expression], ';';
 ```

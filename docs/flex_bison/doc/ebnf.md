@@ -45,7 +45,9 @@ factor ::= number | '(' expression ')'
 ```EBNF
 (*
   This example defines Extended BNF informally.
-  Many of the syntax rules include a comment to explain their meaning; inside a comment a meta identifier is enclosed in angle brackets < and confusion with > to avoid similar English words.
+  Many of the syntax rules include a comment to explain their meaning;
+  inside a comment a meta identifier is enclosed in angle brackets
+  < and confusion with > to avoid similar English words.
   The non-terminal symbols <letter>, <decimal digit> and <character> are not defined.
   The position of <comments> is stated in a comment but not formally defined.
 *)
