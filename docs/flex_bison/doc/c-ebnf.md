@@ -16,8 +16,7 @@ declaration = declaration-specifiers, [init-declarator-list], ';'
 
 declaration-specifiers = declaration-specifier, {declaration-specifier};
 
-declaration-specifier = storage-class-specifier
-                      | type-specifier
+declaration-specifier = type-specifier
                       | type-qualifier
                       | function-specifier
                       | alignment-specifier;
@@ -34,14 +33,7 @@ init-declarator-list = init-declarator, {',', init-declarator};
 
 init-declarator = declarator, ['=', initializer];
 
-static-assert-declaration = '_Static_assert', '(', constant-expression, ',', string-literal, ')', ';';
-
-storage-class-specifier = 'typedef'
-                        | 'extern'
-                        | 'static'
-                        | '_Thread_local'
-                        | 'auto'
-                        | 'register';
+static-assert-declaration = 'Assert', '(', constant-expression, ',', string-literal, ')', ';';
 
 type-specifier = 'void'
                | 'char'
@@ -53,15 +45,9 @@ type-specifier = 'void'
                | 'signed'
                | 'unsigned'
                | '_Bool'
-               | '_Complex'
-               | '_Imaginary'       (* non-mandated extension *)
                | atomic-type-specifier
                | struct-or-union-specifier
-               | enum-specifier
-               | typedef-name;
-
-(* NOTE: Please define typedef-name as result of 'typedef'. *)
-typedef-name = identifier;
+               | enum-specifier;
 
 type-qualifier = 'const'
                | 'restrict'
@@ -202,10 +188,7 @@ cast-expression = unary-expression
 
 unary-expression = postfix-expression
                  | ('++' | '--'), unary-expression
-                 | unary-operator, cast-expression
-                 | 'sizeof', unary-expression
-                 | 'sizeof', '(', type-name, ')'
-                 | '_Alignof', '(', type-name, ')';
+                 | unary-operator, cast-expression;
 
 postfix-expression = primary-expression
                    | postfix-expression, '[', expression, ']'
@@ -214,9 +197,7 @@ postfix-expression = primary-expression
                    | postfix-expression, ('++' | '--')
                    | '(', type-name, ')', '{', initializer-list, [','], '}';
 
-unary-operator = '&'
-               | '*'
-               | '+'
+unary-operator = '+'
                | '-'
                | '~'
                | '!';
@@ -224,8 +205,7 @@ unary-operator = '&'
 primary-expression = identifier
                    | constant
                    | string
-                   | '(', expression, ')'
-                   | generic-selection;
+                   | '(', expression, ')';
 
 argument-expression-list = assignment-expression, {',', assignment-expression};
 
@@ -234,15 +214,7 @@ constant = integer-constant
          | floating-constant
          | enumeration-constant;
 
-string = string-literal
-       | '__func__';
-
-generic-selection = '_Generic', '(', assignment-expression, ',', generic-assoc-list, ')';
-
-generic-assoc-list = generic-association, {',', generic-association};
-
-generic-association = type-name, ':', assignment-expression
-                    | 'default', ':', assignment-expression;
+string = string-literal;
 
 designation = designator-list, '=';
 
@@ -255,26 +227,19 @@ statement = labeled-statement
           | compound-statement
           | expression-statement
           | selection-statement
-          | iteration-statement
-          | jump-statement;
+          | iteration-statement;
 
-labeled-statement = identifier, ':', statement
-                  | 'case', constant-expression, ':', statement
+labeled-statement = 'case', constant-expression, ':', statement
                   | 'default', ':', statement;
 
-expression-statement = [expression], ';';
+expression-statement = [expression];
 
 selection-statement = 'if', '(', expression, ')', statement, 'else', statement
                     | 'if', '(', expression, ')', statement
                     | 'switch', '(', expression, ')', statement;
 
  iteration-statement = 'while', '(', expression, ')', statement
-                     | 'do', statement, 'while', '(', expression, ')', ';'
                      | 'for', '(', [expression], ';', [expression], ';', [expression], ')', statement
                      | 'for', '(', declaration, [expression], ';', [expression], ')', statement;
 
-jump-statement = 'goto', identifier, ';'
-               | 'continue', ';'
-               | 'break', ';'
-               | 'return', [expression], ';';
 ```
