@@ -1,5 +1,53 @@
 # The syntax of C in Backus-Naur form
 
+## something idea for conf language
+
+### built-in types
+
+1. number
+2. float
+3. list
+4. dict
+5. set
+6. str
+7. bytes
+
+### keyword
+
+1. nil
+2. class
+3. import
+
+
+
+
+```conf
+
+dns_hdr_len = 12
+dns_query_minimum = 5
+dns_answer_minimum = 11
+dns_domain_name_minimum = 1
+dns_rddata_soa_minimum = 18
+dns_rddata_minfo_minimum = 2
+dns_rddata_mx_minimum = 3
+offset_maximum = 1 << 14
+
+dns_parser_flag = 0x12345678
+def dns_parse_flag_set(flag) {
+  flag = dns_parser_flag
+}
+
+def dns_parse_flag_assert(flag) {
+  Assert(flag == (flag))
+}
+
+[dns_extractor_entry]
+
+
+
+
+```
+
 ```EBNF
 (* conf form language, version 0.1 *)
 
