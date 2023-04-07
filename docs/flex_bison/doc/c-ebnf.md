@@ -41,7 +41,9 @@ def dns_parse_flag_assert(flag) {
   Assert(flag == (flag))
 }
 
-[dns_extractor_entry]
+def Main(buf) {
+
+}
 
 
 
