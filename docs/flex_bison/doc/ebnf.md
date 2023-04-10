@@ -1,46 +1,54 @@
 # EBNF
 
-1. Terminal symbols: 单个字符或字符串表示语法中的基本元素
-2. Non-Terminal symbols: 表示一个递归定义的符号，可以由其他符号定义，最终会被展开为终止符号序列
-3. Alternation: 使用竖线|表示或关系，指定两个或多个选项
-4. Optional element: 用方括号[]表示可选元素，可以出现零次或多次
-5. Repetition: 使用花括号{}表示重复元素，可以出现零次或多次
-6. Grouping: 使用括号()表示语法结构分组，以改变优先级提高可读性
-7. Concatenation: 空格或没有连接符表示连接符，并要求两个元素在源码中依次出现
+Syntax | Description
+-|-
+Terminal symbols | 单个字符或字符串表示语法中的基本元素
+Non-Terminal symbols | 表示一个递归定义的符号，可以由其他符号定义，最终会被展开为终止符号序列
+Alternation | 使用竖线|表示或关系，指定两个或多个选项
+Optional element | 用方括号[]表示可选元素，可以出现零次或多次
+Repetition | 使用花括号{}表示重复元素，可以出现零次或多次
+Grouping | 使用括号()表示语法结构分组，以改变优先级提高可读性
+Concatenation | 空格或没有连接符表示连接符，并要求两个元素在源码中依次出现
 
-```EBNF
+```BNF
+<number> ::= <digit> | <number> <digit>
+<digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0
+<while loop> ::= while (<condition>) <statement>
+<assignment statement> ::= <variable> = <expression>
+<statement list> ::= <statement> | <statement list> <statement>
+<unsigned integer> ::= <digit> | <unsigned integer><digit>
+<expression> ::= <expression> + <term> | <expression> - <term> | <term>
+<term> ::= <term> * <factor> | <term> / <factor> | <factor>
+<factor> ::= <primary> ^ <factor> | <primary>
+<primay> ::= <primary> | <element>
+<element> ::= (<expression>) | <variable> | <number>
+```
+Syntax | Description
+-|-
+::= | means is defined as (some variants use "::=" instead)
+\| | means "or"
+\<symbol\> | Angle brackets mean a non-terminal
+symbol | Symbols without angle brackets are terminals
+
+```BNF
 expression ::= term {('+'|'-')} term
 term ::= factor {('*' | '/') factor}
 factor ::= number | '(' expression ')'
 ```
 
-8. ::= 表示定义
-9. '+' '-' '*' '/' 表示加减乘除运算符 （单引号或双引号）
-10. number表示数字字面值
-
-## 定义
-
-1. 序列 sequence: 零个或多个项目组成的有序列表
-2. 子序列 subsequence: 序列内的序列
-3. 非终止符 Non-Terminal symbol: 被定义语言的语法部分
-4. 元标识符 meta-identify: 非终止符的名称
-5. 起始符 start symbol: 一个或多个语法规则定义的非终止符，但不出现在任何其他语法规则中
-6. 句子 sentence: 表示起始符的符号序列
-7. 终止符 Terminal symbol: 一个或多个字符序列构成的不可分割的语言元素
-8. \* 重复符号
-9. \- 排除符号
-10. , 连接符号
-11. | 定义分割符号
-12. = 定义符号
-13. ；终止符号
-14. 'first-quote-symbol'
-15. "second-quote-symbol"
-16. (\*start-comment-symbol end-comment-symbol\*)
-17. (start-group-symbol end-group-symbol)
-18. [start-optional-symbol end-optional-symbol]
-19. {start-repeat-symbol end-repeat-symbol}
-20. ?special-sequence?
-21. -symbol
+```BNF
+(* EBNF self-description *)
+production = non-terminal '=' expression
+expression = term {'|' term}
+term = factor {factor}
+factor = non-terminal
+        | terminal
+        | '(' expression ')'
+        | '[' expression ']'
+        | '{' expression '}'
+terminal = identifier | "<any character>"
+non-terminal = identifier
+```
 
 ```EBNF
 (*
