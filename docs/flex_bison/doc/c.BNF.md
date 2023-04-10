@@ -3,7 +3,7 @@
 ```BNF
 (* The syntax of C in Backus-Naur Form. *)
 
-translation-unit = {external-declaration}*
+<translation-unit> ::= {<external-declaration>}*
 
 <external-declaration> ::= <function-definition>
                          | <declaration>
