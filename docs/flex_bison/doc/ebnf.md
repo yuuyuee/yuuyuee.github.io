@@ -1,6 +1,7 @@
-# EBNF
+# Backus Naur Form
 
-Syntax | Description
+
+Concept | Description
 -|-
 Terminal symbols | 单个字符或字符串表示语法中的基本元素
 Non-Terminal symbols | 表示一个递归定义的符号，可以由其他符号定义，最终会被展开为终止符号序列
@@ -10,44 +11,46 @@ Repetition | 使用花括号{}表示重复元素，可以出现零次或多次
 Grouping | 使用括号()表示语法结构分组，以改变优先级提高可读性
 Concatenation | 空格或没有连接符表示连接符，并要求两个元素在源码中依次出现
 
+## BNF
+
 ```BNF
+(* BNF examples *)
 <number> ::= <digit> | <number> <digit>
 <digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0
 <while loop> ::= while (<condition>) <statement>
 <assignment statement> ::= <variable> = <expression>
 <statement list> ::= <statement> | <statement list> <statement>
 <unsigned integer> ::= <digit> | <unsigned integer><digit>
+
+(* BNF for expressions *)
 <expression> ::= <expression> + <term> | <expression> - <term> | <term>
 <term> ::= <term> * <factor> | <term> / <factor> | <factor>
 <factor> ::= <primary> ^ <factor> | <primary>
 <primay> ::= <primary> | <element>
 <element> ::= (<expression>) | <variable> | <number>
 ```
+
 Syntax | Description
 -|-
 ::= | means is defined as (some variants use "::=" instead)
 \| | means "or"
 \<symbol\> | Angle brackets mean a non-terminal
 symbol | Symbols without angle brackets are terminals
+@symbol | Symbols can be removed
 
-```BNF
+## EBNF
+
+Syntax | Description
+-|-
+\* | means 0 or more occurrences
+\+ | means 1 or more occurrences
+? | means 0 or 1 occurrences, sometimes [...] used instead
+() | use of parentheses for grouping
+
+```EBNF
 expression ::= term {('+'|'-')} term
 term ::= factor {('*' | '/') factor}
 factor ::= number | '(' expression ')'
-```
-
-```BNF
-(* EBNF self-description *)
-production = non-terminal '=' expression
-expression = term {'|' term}
-term = factor {factor}
-factor = non-terminal
-        | terminal
-        | '(' expression ')'
-        | '[' expression ']'
-        | '{' expression '}'
-terminal = identifier | "<any character>"
-non-terminal = identifier
 ```
 
 ```EBNF
@@ -148,3 +151,54 @@ comment symbol = comment / terminal / special sequence / character
 
 ```
 
+## BNF vs EBNF
+
+* Grammar for decimal numbers in plain BNF:
+
+```BNF
+(* example 1*)
+<expr> ::= '-' <num> | <num>
+<num> ::= <digits> | <digits> '.' <digits>
+<digits> ::= <digits> | <digit> <digits>
+<digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+(* example 2 *)
+<expr> ::= <digits> | empty
+
+(* example 3*)
+<id> ::= <letter> | <id><letter> | <id><digit>
+```
+
+* Some grammar in EBNF:
+
+```EBNF
+(* example 1*)
+<expr> := '-'? <digit>+ ('.' <digit>+)?
+<digit> := '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+(* example 2 *)
+<expr> ::= <digits>*
+
+(* example 3*)
+<id> ::= <letter> (<letter> | <digit>)*
+```
+
+* Look for recursion in grammar
+
+```EBNF
+(* BNF *)
+A ::= a A | B
+
+(* EBNF *)
+A ::= a {a} B
+```
+
+* Look for common string that can be factored out with grouping and options
+
+```EBNF
+(* BNF *)
+A ::= a B | a
+
+(* EBNF *)
+A ::= a [B]
+```

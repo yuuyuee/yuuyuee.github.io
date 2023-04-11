@@ -1,7 +1,8 @@
 # The syntax of C in Backus-Naur form
 
-```EBNF
-(* conf form language, version 0.1 *)
+```BNF
+(* The syntax of C in Backus-Naur Form. *)
+
 <translation-unit> ::= {<external-declaration>}*
 
 <external-declaration> ::= <function-definition>
@@ -22,6 +23,7 @@
                    | unsigned
                    | <struct-or-union-specifier>
                    | <enum-specifier>
+                   | <typedef-name>
 
 <struct-or-union-specifier> ::= <struct-or-union> <identifier> { {<struct-declaration>}+ }
                               | <struct-or-union> { {<struct-declaration>}+ }
@@ -41,7 +43,9 @@
                       | <declarator> : <constant-expression>
                       | : <constant-expression>
 
-<declarator> ::= <direct-declarator>
+<declarator> ::= {<pointer>}? <direct-declarator>
+
+<pointer> ::= * {<pointer>}?
 
 <direct-declarator> ::= <identifier>
                       | ( <declarator> )
@@ -138,7 +142,8 @@
                         | ^=
                         | |=
 
-<unary-operator> ::=
+<unary-operator> ::= &
+                   | *
                    | +
                    | -
                    | ~
@@ -174,6 +179,8 @@
 <enumerator> ::= <identifier>
                | <identifier> = <constant-expression>
 
+<typedef-name> ::= <identifier>
+
 <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
 
 <init-declarator> ::= <declarator>
@@ -193,6 +200,7 @@
               | <compound-statement>
               | <selection-statement>
               | <iteration-statement>
+              | <jump-statement>
 
 <labeled-statement> ::= <identifier> : <statement>
                       | case <constant-expression> : <statement>
@@ -205,5 +213,12 @@
                         | switch ( <expression> ) <statement>
 
 <iteration-statement> ::= while ( <expression> ) <statement>
+                        | do <statement> while ( <expression> ) ;
                         | for ( {<expression>}? ; {<expression>}? ; {<expression>}? ) <statement>
+
+<jump-statement> ::= goto <identifier> ;
+                   | continue ;
+                   | break ;
+                   | return {<expression>}? ;
+
 ```
