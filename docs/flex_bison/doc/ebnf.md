@@ -1,6 +1,5 @@
 # Backus Naur Form
 
-
 Concept | Description
 -|-
 Terminal symbols | 单个字符或字符串表示语法中的基本元素
@@ -14,15 +13,25 @@ Concatenation | 空格或没有连接符表示连接符，并要求两个元素�
 ## BNF
 
 ```BNF
-(* BNF examples *)
+(* BNF recursion example *)
+<number> ::= <digit> | <number> <digit>
+<digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0
+
+(* BNF precedence example *)
+<expression> ::= <expression> + <term>
+               | <expression> - <term>
+               | <term>
+<term> ::= <term> * <factor>
+         | <term> / <factor>
+         | <factor>
+
+(* BNF example *)
 <number> ::= <digit> | <number> <digit>
 <digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0
 <while loop> ::= while (<condition>) <statement>
 <assignment statement> ::= <variable> = <expression>
 <statement list> ::= <statement> | <statement list> <statement>
 <unsigned integer> ::= <digit> | <unsigned integer><digit>
-
-(* BNF for expressions *)
 <expression> ::= <expression> + <term> | <expression> - <term> | <term>
 <term> ::= <term> * <factor> | <term> / <factor> | <factor>
 <factor> ::= <primary> ^ <factor> | <primary>

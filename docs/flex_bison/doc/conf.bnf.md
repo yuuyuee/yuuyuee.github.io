@@ -1,224 +1,124 @@
-# The syntax of C in Backus-Naur form
+# The syntax of CONF in Backus-Naur form
 
-```BNF
-(* The syntax of C in Backus-Naur Form. *)
+```EBNF
+(* The syntax of Conf in Backus-Naur Form. *)
 
-<translation-unit> ::= {<external-declaration>}*
+(* Operator precedence and associativity
+Operators                   | Type of operation         | Associativity
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(exprs...)                  | parenthesized expression  |
+[exprs...]                  | list                      |
+{key: value...}             | dictionary                |
+{exprs}                     | set                       |
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+x[index]                    | subscription              | left to right
+x[index:index]              | slicing                   | left to right
+x(arguments...)             | function call             | left to right
+x.attribute                 | attribute reference       | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+**                          | exponentiation            | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++x                          | positive                  | left to right
+-x                          | negative                  | left to right
+~x                          | bitwise NOT               | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*                           | multiplication            | left to right
+/                           | division                  | left to right
+//                          | floor division            | left to right
+%                           | remainder                 | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++                           | addition                  | left to right
+-                           | substraction              | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<<                          | left shift                | left to right
+>>                          | right shift               | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+&                           | bitwise AND               | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+^                           | bitwise XOR               | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+|                           | bitwise OR                | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+in                          | including membership      | left to right
+not in                      | not including membership  | left to right
+is                          | identity                  | left to right
+is not                      | not identity              | left to right
+<                           | less than                 | left to right
+<=                          | less or equal than        | left to right
+>                           | greater than              | left to right
+>=                          | greater or equal than     | left to right
+==                          | equal                     | left to right
+!=                          | not equal                 | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+not x                       | boolean NOT               | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+and                         | boolean AND               | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+or                          | boolean OR                | left to right
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+if - else                   | conditional expression    |
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+lambda                      | lambda expression         |
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+:=                          | assignment expression     |
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*)
 
-<external-declaration> ::= <function-definition>
-                         | <declaration>
+statements ::= statement+
 
-<function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+statement ::= simple_statement | compound_statement
 
-<declaration-specifier> ::= <type-specifier>
+simple_statement = assignment
+                 | star_expressions
 
-<type-specifier> ::= void
-                   | char
-                   | short
-                   | int
-                   | long
-                   | float
-                   | double
-                   | signed
-                   | unsigned
-                   | <struct-or-union-specifier>
-                   | <enum-specifier>
-                   | <typedef-name>
 
-<struct-or-union-specifier> ::= <struct-or-union> <identifier> { {<struct-declaration>}+ }
-                              | <struct-or-union> { {<struct-declaration>}+ }
-                              | <struct-or-union> <identifier>
 
-<struct-or-union> ::= struct
-                    | union
 
-<struct-declaration> ::= {<specifier-qualifier>}* <struct-declarator-list>
 
-<specifier-qualifier> ::= <type-specifier>
 
-<struct-declarator-list> ::= <struct-declarator>
-                           | <struct-declarator-list> , <struct-declarator>
 
-<struct-declarator> ::= <declarator>
-                      | <declarator> : <constant-expression>
-                      | : <constant-expression>
 
-<declarator> ::= {<pointer>}? <direct-declarator>
+(* Bitwise operators *)
+inclusive-or-expression ::= inclusive-or-expression '|' exclusive-or-expression
+                          | exclusive-or-expression
 
-<pointer> ::= * {<pointer>}?
+exclusive-or-expression ::= exclusive-or-expression '^' and-expression
+                          | and-expression
 
-<direct-declarator> ::= <identifier>
-                      | ( <declarator> )
-                      | <direct-declarator> [ {<constant-expression>}? ]
-                      | <direct-declarator> ( <parameter-type-list> )
-                      | <direct-declarator> ( {<identifier>}* )
+and-expression ::= and-expression '&' shift-expression
+                 | shift-expression
 
-<constant-expression> ::= <conditional-expression>
+shift-expression ::= shift-expression '<<' additive-expression
+                   | shift-expression '>>' additive-expression
+                   | additive-expression
 
-<conditional-expression> ::= <logical-or-expression>
-                           | <logical-or-expression> ? <expression> : <conditional-expression>
+(* Arithmetic operators *)
+additive-expression ::= additive-expression '+' multiplicative-expression
+                      | additive-expression '-' multiplicative-expression
+                      | multiplicative-expression
 
-<logical-or-expression> ::= <logical-and-expression>
-                          | <logical-or-expression> || <logical-and-expression>
+multiplicative-expression ::= multiplicative-expression '*' unary-expression
+                            | multiplicative-expression '/' unary-expression
+                            | multiplicative-expression '//' unary-expression
+                            | multiplicative-expression '%' unary-expression
+                            | unary-expression
 
-<logical-and-expression> ::= <inclusive-or-expression>
-                           | <logical-and-expression> && <inclusive-or-expression>
+unary-expression ::= '+' unary-expression
+                   | '-' unary-expression
+                   | '~' unary-expression
+                   | power-expression
 
-<inclusive-or-expression> ::= <exclusive-or-expression>
-                            | <inclusive-or-expression> | <exclusive-or-expression>
+power_expression ::= postfix-expression '**' unary-expression
+                   | postfix-expression
 
-<exclusive-or-expression> ::= <and-expression>
-                            | <exclusive-or-expression> ^ <and-expression>
+postfix-expression ::= postfix-expression '[' expression ']'
+                     | postfix-expression '(' expression ')'
+                     | postfix-expression '.' identifier
+                     | primary-expression
 
-<and-expression> ::= <equality-expression>
-                   | <and-expression> & <equality-expression>
-
-<equality-expression> ::= <relational-expression>
-                        | <equality-expression> == <relational-expression>
-                        | <equality-expression> != <relational-expression>
-
-<relational-expression> ::= <shift-expression>
-                          | <relational-expression> < <shift-expression>
-                          | <relational-expression> > <shift-expression>
-                          | <relational-expression> <= <shift-expression>
-                          | <relational-expression> >= <shift-expression>
-
-<shift-expression> ::= <additive-expression>
-                     | <shift-expression> << <additive-expression>
-                     | <shift-expression> >> <additive-expression>
-
-<additive-expression> ::= <multiplicative-expression>
-                        | <additive-expression> + <multiplicative-expression>
-                        | <additive-expression> - <multiplicative-expression>
-
-<multiplicative-expression> ::= <cast-expression>
-                              | <multiplicative-expression> * <cast-expression>
-                              | <multiplicative-expression> / <cast-expression>
-                              | <multiplicative-expression> % <cast-expression>
-
-<cast-expression> ::= <unary-expression>
-                    | ( <type-name> ) <cast-expression>
-
-<unary-expression> ::= <postfix-expression>
-                     | ++ <unary-expression>
-                     | -- <unary-expression>
-                     | <unary-operator> <cast-expression>
-                     | sizeof <unary-expression>
-                     | sizeof <type-name>
-
-<postfix-expression> ::= <primary-expression>
-                       | <postfix-expression> [ <expression> ]
-                       | <postfix-expression> ( {<assignment-expression>}* )
-                       | <postfix-expression> . <identifier>
-                       | <postfix-expression> -> <identifier>
-                       | <postfix-expression> ++
-                       | <postfix-expression> --
-
-<primary-expression> ::= <identifier>
-                       | <constant>
-                       | <string>
-                       | ( <expression> )
-
-<constant> ::= <integer-constant>
-             | <character-constant>
-             | <floating-constant>
-             | <enumeration-constant>
-
-<expression> ::= <assignment-expression>
-               | <expression> , <assignment-expression>
-
-<assignment-expression> ::= <conditional-expression>
-                          | <unary-expression> <assignment-operator> <assignment-expression>
-
-<assignment-operator> ::= =
-                        | *=
-                        | /=
-                        | %=
-                        | +=
-                        | -=
-                        | <<=
-                        | >>=
-                        | &=
-                        | ^=
-                        | |=
-
-<unary-operator> ::= &
-                   | *
-                   | +
-                   | -
-                   | ~
-                   | !
-
-<type-name> ::= {<specifier-qualifier>}+ {<abstract-declarator>}?
-
-<parameter-type-list> ::= <parameter-list>
-                        | <parameter-list> , ...
-
-<parameter-list> ::= <parameter-declaration>
-                   | <parameter-list> , <parameter-declaration>
-
-<parameter-declaration> ::= {<declaration-specifier>}+ <declarator>
-                          | {<declaration-specifier>}+ <abstract-declarator>
-                          | {<declaration-specifier>}+
-
-<abstract-declarator> ::= <pointer>
-                        | <pointer> <direct-abstract-declarator>
-                        | <direct-abstract-declarator>
-
-<direct-abstract-declarator> ::=  ( <abstract-declarator> )
-                               | {<direct-abstract-declarator>}? [ {<constant-expression>}? ]
-                               | {<direct-abstract-declarator>}? ( {<parameter-type-list>}? )
-
-<enum-specifier> ::= enum <identifier> { <enumerator-list> }
-                   | enum { <enumerator-list> }
-                   | enum <identifier>
-
-<enumerator-list> ::= <enumerator>
-                    | <enumerator-list> , <enumerator>
-
-<enumerator> ::= <identifier>
-               | <identifier> = <constant-expression>
-
-<typedef-name> ::= <identifier>
-
-<declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
-
-<init-declarator> ::= <declarator>
-                    | <declarator> = <initializer>
-
-<initializer> ::= <assignment-expression>
-                | { <initializer-list> }
-                | { <initializer-list> , }
-
-<initializer-list> ::= <initializer>
-                     | <initializer-list> , <initializer>
-
-<compound-statement> ::= { {<declaration>}* {<statement>}* }
-
-<statement> ::= <labeled-statement>
-              | <expression-statement>
-              | <compound-statement>
-              | <selection-statement>
-              | <iteration-statement>
-              | <jump-statement>
-
-<labeled-statement> ::= <identifier> : <statement>
-                      | case <constant-expression> : <statement>
-                      | default : <statement>
-
-<expression-statement> ::= {<expression>}? ;
-
-<selection-statement> ::= if ( <expression> ) <statement>
-                        | if ( <expression> ) <statement> else <statement>
-                        | switch ( <expression> ) <statement>
-
-<iteration-statement> ::= while ( <expression> ) <statement>
-                        | do <statement> while ( <expression> ) ;
-                        | for ( {<expression>}? ; {<expression>}? ; {<expression>}? ) <statement>
-
-<jump-statement> ::= goto <identifier> ;
-                   | continue ;
-                   | break ;
-                   | return {<expression>}? ;
-
+(* Primary elements *)
+primary-expression ::= identifier
+                     | constant
+                     | string
+                     | '(' expression ')'
 ```

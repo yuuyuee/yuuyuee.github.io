@@ -91,28 +91,20 @@
                         | <additive-expression> + <multiplicative-expression>
                         | <additive-expression> - <multiplicative-expression>
 
-<multiplicative-expression> ::= <cast-expression>
-                              | <multiplicative-expression> * <cast-expression>
-                              | <multiplicative-expression> / <cast-expression>
-                              | <multiplicative-expression> % <cast-expression>
+<multiplicative-expression> ::= <unary-expression>
+                              | <multiplicative-expression> * <unary-expression>
+                              | <multiplicative-expression> / <unary-expression>
+                              | <multiplicative-expression> % <unary-expression>
 
-<cast-expression> ::= <unary-expression>
-                    | ( <type-name> ) <cast-expression>
 
 <unary-expression> ::= <postfix-expression>
-                     | ++ <unary-expression>
-                     | -- <unary-expression>
                      | <unary-operator> <cast-expression>
-                     | sizeof <unary-expression>
-                     | sizeof <type-name>
 
 <postfix-expression> ::= <primary-expression>
                        | <postfix-expression> [ <expression> ]
                        | <postfix-expression> ( {<assignment-expression>}* )
                        | <postfix-expression> . <identifier>
                        | <postfix-expression> -> <identifier>
-                       | <postfix-expression> ++
-                       | <postfix-expression> --
 
 <primary-expression> ::= <identifier>
                        | <constant>
