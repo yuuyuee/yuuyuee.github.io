@@ -88,6 +88,7 @@ SPECIAL_FLAG=1
 # 格式: T_(name|number)=<source>\|<type|function>(<args[,...]>)[\|...]
 # 数字定义:
 # 998 - 配置ID
+T_(0)   = NONE|STRING(USERID)
 T_(5)   = NONE|STRING(USERID)
 T_(6)   = NONE|STRING(103)
 T_(7)   = NONE|STRING(103)

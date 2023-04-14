@@ -2,13 +2,42 @@
 
 Concept | Description
 -|-
-Terminal symbols | 单个字符或字符串表示语法中的基本元素
-Non-Terminal symbols | 表示一个递归定义的符号，可以由其他符号定义，最终会被展开为终止符号序列
-Alternation | 使用竖线|表示或关系，指定两个或多个选项
-Optional element | 用方括号[]表示可选元素，可以出现零次或多次
-Repetition | 使用花括号{}表示重复元素，可以出现零次或多次
-Grouping | 使用括号()表示语法结构分组，以改变优先级提高可读性
-Concatenation | 空格或没有连接符表示连接符，并要求两个元素在源码中依次出现
+\<symbol\> | Angle brackets mean a non-terminal
+symbol | Symbols without angle brackets are terminals
+@symbol | Symbols can be removed
+::= | means is defined as (some variants use "::=" instead)
+\| | alternation symbol, means "or"
+[] | indicate optional symbols
+{} | indicate repetition
+() | indicate grouping of grammatical structures to change priority and improve readability
+space | space or nothing indicate sequence
+
+## Summary BNF
+
+1. BNF uses following notations
+   1. Non-terminals enclosed in < and >
+   2. Rules written as X ::= Y
+   3. X is LHS of rule and can only be a non-terminal symbol
+   4. Y is RHS of rule, Y can be
+      1. terminal symbol
+      2. non-terminal symbol
+      3. concatenation of terminal and non-terminal symbol
+      4. a set of strings separated by alternatioin symbol
+   Example: \<S\> ::= a \<S\> | a
+
+## Extended BNF
+
+1. EBNF adding more meta-notation => shorter productions
+2. Non-terminals begin with uppercase letters (discatd <>)
+3. Repetitions(0 or more) are enclosed in {}
+4. Options(0 or one) are enclosed in []
+   stmt ::= if Cond then Stmt
+          | if Cond then Stmt else Stmt
+  => stmt ::= if Cond then Stmt [else Stmt]
+5. Use () to group items together
+   expr ::= item {+ item} | item {- item}
+   => expr ::= item {(+|-) item}
+6. Terminals that are grammar symbols are enclosed in quotes
 
 ## BNF
 
@@ -39,14 +68,6 @@ Concatenation | 空格或没有连接符表示连接符，并要求两个元素�
 <element> ::= (<expression>) | <variable> | <number>
 ```
 
-Syntax | Description
--|-
-::= | means is defined as (some variants use "::=" instead)
-\| | means "or"
-\<symbol\> | Angle brackets mean a non-terminal
-symbol | Symbols without angle brackets are terminals
-@symbol | Symbols can be removed
-
 ## EBNF
 
 Syntax | Description
@@ -54,7 +75,10 @@ Syntax | Description
 \* | means 0 or more occurrences
 \+ | means 1 or more occurrences
 ? | means 0 or 1 occurrences, sometimes [...] used instead
-() | use of parentheses for grouping
+\- | except symbol
+, | concatenate symbol
+= | defining symbol
+; | terminator symbol
 
 ```EBNF
 expression ::= term {('+'|'-')} term

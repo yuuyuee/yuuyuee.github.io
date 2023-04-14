@@ -66,10 +66,12 @@ lambda                      | lambda expression         |
 
 statements ::= statement+
 
-statement ::= simple_statement | compound_statement
+statement ::= simple_statements | compound_statement
 
-simple_statement = assignment
-                 | star_expressions
+simple_statements ::= simple_statement+
+
+simple_statement ::= assi
+
 
 
 
@@ -106,13 +108,10 @@ multiplicative-expression ::= multiplicative-expression '*' unary-expression
 unary-expression ::= '+' unary-expression
                    | '-' unary-expression
                    | '~' unary-expression
-                   | power-expression
-
-power_expression ::= postfix-expression '**' unary-expression
                    | postfix-expression
 
 postfix-expression ::= postfix-expression '[' expression ']'
-                     | postfix-expression '(' expression ')'
+                     | postfix-expression '(' {assignment-expression}* ')'
                      | postfix-expression '.' identifier
                      | primary-expression
 
