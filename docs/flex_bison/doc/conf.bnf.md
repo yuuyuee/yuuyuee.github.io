@@ -3,6 +3,20 @@
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
 
+(*
+
+function-declaration
+  assignment-expression
+  compound-statement
+  if-else-statement
+  for-statement
+  while-statement
+  switch-statement
+class-declaration
+  class-statement
+
+*)
+
 (* Operator precedence and associativity
 Operators                   | Type of operation         | Associativity
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -60,22 +74,15 @@ if - else                   | conditional expression    |
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 lambda                      | lambda expression         |
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:=                          | assignment expression     |
+=                           | assignment expression     |
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 *)
 
-statements ::= statement+
+(* Class definition *)
+class-definition ::= 'class' identifier '{' block '}'
 
-statement ::= simple_statements | compound_statement
-
-simple_statements ::= simple_statement+
-
-simple_statement ::= assi
-
-
-
-
-
+(* Function definition *)
+function-definition ::= 'func' identifier '(' [params] ')' '{' block '}'
 
 
 
