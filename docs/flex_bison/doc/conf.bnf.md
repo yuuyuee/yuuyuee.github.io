@@ -2,21 +2,6 @@
 
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
-
-(*
-
-function-declaration
-  assignment-expression
-  compound-statement
-  if-else-statement
-  for-statement
-  while-statement
-  switch-statement
-class-declaration
-  class-statement
-
-*)
-
 (* Operator precedence and associativity
 Operators                   | Type of operation         | Associativity
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -64,7 +49,7 @@ is not                      | not identity              | left to right
 ==                          | equal                     | left to right
 !=                          | not equal                 | left to right
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-not x                       | boolean NOT               | left to right
+not                         | boolean NOT               | left to right
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 and                         | boolean AND               | left to right
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -72,59 +57,193 @@ or                          | boolean OR                | left to right
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if - else                   | conditional expression    |
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-lambda                      | lambda expression         |
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 =                           | assignment expression     |
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Note:
+    all comparison operators have the same priority, which is lower
+than that of arithmetic, shifting or bitwise operation.
+    comparison can be chained arbitrarily and have the interpretation
+that is conventional in mathematics. like as expression "a < b < c" is
+equivalent to "a < b and b < c"
 *)
 
-(* Class definition *)
-class-definition ::= 'class' identifier '{' block '}'
+program ::= [statements]
 
-(* Function definition *)
-function-definition ::= 'func' identifier '(' [params] ')' '{' block '}'
+statements ::= statement+
 
+statement ::= compound_statement | simple_statements
 
+simple_statements ::= simple_statement+ ';'
 
+(* Simple Statement*)
+
+(* assignment must precede expression, else parsing a simple assignment
+   will throw a syntax error *)
+simple_statement ::= assignment_statement
+                   | expression
+                   | return_statement
+                   | raise_statement
+                   | assert_statement
+                   | 'break'
+                   | 'continue'
+
+assignment_statement ::= (target_list '=')+ (expressions)
+target_list ::= target (',' target)* [',']
+target ::= NAME
+         | '(' [target_list] ')'
+         | '[' [target_list] ']'
+         | attributeref
+         | subscription
+         | slicing
+
+expressions ::= expression (',' expression)+ [',']
+              | expression ','
+              | expression
+
+expression ::= disjunction 'if' disjunction 'else' expression
+             | disjunction
+
+disjunction ::= conjunction ('or' conjunction)+
+              | conjunction
+
+conjunction ::= inversion ('and' inversion)+
+
+inversion ::= 'not' inversion | comparison
+
+(* Comparison operators *)
+comparison ::= bitwise_or compare_op_bitwise_or_pair+ | bitwise_or
+compare_op_bitwise_or_pair ::= eq_bitwise_or
+                             | noteq_bitwise_or
+                             | lte_bitwise_or
+                             | lt_bitwise_or
+                             | gte_bitwise_or
+                             | gt_bitwise_or
+                             | notin_bitwise_or
+                             | in_bitwise_or
+                             | isnot_bitwise_or
+                             | is_bitwise_or
+
+eq_bitwise_or ::= '==' bitwise_or
+noteq_bitwise_or ::= ('!=') bitwise_or
+lte_bitwise_or ::= ('<=') bitwise_or
+lt_bitwise_or ::= ('<') bitwise_or
+gte_bitwise_or ::= ('>=') bitwise_or
+gt_bitwise_or ::= ('>') bitwise_or
+notin_bitwise_or ::= ('not in') bitwise_or
+in_bitwise_or ::= ('in') bitwise_or
+isnot_bitwise_or ::= ('is not') bitwise_or
+is_bitwise_or ::= ('is') bitwise_or
 
 (* Bitwise operators *)
-inclusive-or-expression ::= inclusive-or-expression '|' exclusive-or-expression
-                          | exclusive-or-expression
+bitwise_or ::= bitwise_or '|' bitwise_xor
+             | bitwise_xor
 
-exclusive-or-expression ::= exclusive-or-expression '^' and-expression
-                          | and-expression
+bitwise_xor ::= bitwise_xor '^' bitwise_and
+              | bitwise_and
 
-and-expression ::= and-expression '&' shift-expression
-                 | shift-expression
+bitwise_and ::= bitwise_and '&' shift_expr
+              | shift_expr
 
-shift-expression ::= shift-expression '<<' additive-expression
-                   | shift-expression '>>' additive-expression
-                   | additive-expression
+shift_expr ::= shift_expr '<<' sum
+             | shift_expr '>>' sum
+             | sum
 
 (* Arithmetic operators *)
-additive-expression ::= additive-expression '+' multiplicative-expression
-                      | additive-expression '-' multiplicative-expression
-                      | multiplicative-expression
+sum ::= sum '+' term
+      | sum '-' term
+      | term
 
-multiplicative-expression ::= multiplicative-expression '*' unary-expression
-                            | multiplicative-expression '/' unary-expression
-                            | multiplicative-expression '//' unary-expression
-                            | multiplicative-expression '%' unary-expression
-                            | unary-expression
+term ::= term '*' factor
+       | term '/' factor
+       | term '//' factor
+       | term '%' factor
+       | factor
 
-unary-expression ::= '+' unary-expression
-                   | '-' unary-expression
-                   | '~' unary-expression
-                   | postfix-expression
+factor ::= '+' factor
+         | '-' factor
+         | '~' factor
+         | power
 
-postfix-expression ::= postfix-expression '[' expression ']'
-                     | postfix-expression '(' {assignment-expression}* ')'
-                     | postfix-expression '.' identifier
-                     | primary-expression
+power ::= primary '**' factor
+        | primary
 
 (* Primary elements *)
-primary-expression ::= identifier
-                     | constant
-                     | string
-                     | '(' expression ')'
+primary ::= primary '.' NAME
+          | primary '(' [arguments] ')'
+          | primary '[' slices ']'
+          | atom
+
+slices ::= [expression] ':' [expression] [':' [expression]]
+         | expression
+
+atom ::= NAME
+       | 'True'
+       | 'False'
+       | 'None'
+       | strings
+       | NUMBER
+       | tuple
+       | list
+       | dict
+       | set
+
+(* Literals *)
+string ::= STRING
+strings ::= string+
+
+list ::= '[' [expressions] ']'
+tuple ::= '(' [expressions] ')'
+set ::= '{' [expressions] '}'
+
+(* Dicts *)
+dict ::= '{' [kvpairs] '}'
+kvpairs ::= kvpair | kvpairs ',' kvpair
+kvpair ::= expression ':' expression
+
+(* function call arguments *)
+arguments ::= argumetns ',' expression | expression
+
+(* Return statement *)
+return_statement ::= 'return' [expression]
+
+(* Raise statement *)
+raise_statement ::= 'raise' expression
+
+(* Assert statement *)
+assert_statement ::= 'assert' expression [',' expression]
+
+(* Compound Statement *)
+compound_stmt ::= function_def
+                | if_statement
+                | class_def
+                | for_statement
+                | match_statement
+
+(* Class definition *)
+class-definition ::= 'class' NAME '{' block '}'
+
+(* Function definition *)
+function-definition ::= 'func' NAME '(' [NAME] ')' '{' block '}'
+
+block ::= statements | simple_statements
+
+(* If statement *)
+if_statement ::= 'if' expression '{' block '}' elif_statement
+               | 'if' expression '{' block '}' [else_block]
+               | 'if' expression '{' block '}'
+
+elif_statement ::= 'elif' expression '{' block }' elif_statement
+                 | 'elif' expression '{' block }' [else_block]
+                 | 'elif' expression '{' block }'
+
+else_block ::= 'else' '{' block '}'
+
+(* For statement *)
+for_statement ::= 'for' target_list 'in' expression '{' block '}'
+
+(* Match statement *)
+match_statement ::= 'match' expression '{' case_block+ '}'
+case_block ::= 'case' expression '{' block '}' | 'default' '{' block '}'
+
+
 ```
