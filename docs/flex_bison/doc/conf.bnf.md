@@ -67,72 +67,43 @@ that is conventional in mathematics. like as expression "a < b < c" is
 equivalent to "a < b and b < c"
 *)
 
-program ::= [statements]
+program ::= [stmts]
 
-statements ::= statement+
+stmts ::= stmt+
 
-statement ::= compound_statement | simple_statements
+stmt ::= compound_stmt | simple_stmts
 
-simple_statements ::= simple_statement+ ';'
+simple_stmts ::= simple_stmt+ ';'
 
-(* Simple Statement*)
+(* simple statement*)
 
 (* assignment must precede expression, else parsing a simple assignment
    will throw a syntax error *)
-simple_statement ::= assignment_statement
-                   | expression
-                   | return_statement
-                   | raise_statement
-                   | assert_statement
-                   | 'break'
-                   | 'continue'
-
-assignment_statement ::= (target_list '=')+ (expressions)
-target_list ::= target (',' target)* [',']
-target ::= NAME
-         | '(' [target_list] ')'
-         | '[' [target_list] ']'
-         | attributeref
-         | subscription
-         | slicing
-
-expressions ::= expression (',' expression)+ [',']
-              | expression ','
+simple_stmt ::= assign_stmt
               | expression
+              | return_stmt
+              | raise_stmt
+              | assert_stmt
+              | 'break'
+              | 'continue'
 
-expression ::= disjunction 'if' disjunction 'else' expression
-             | disjunction
+(* assignment statement *)
+assign_stmt ::= (target_list '=')+ (expr_list)
+target_list ::= target (',' target)* [',']
+target ::= primary
 
-disjunction ::= conjunction ('or' conjunction)+
-              | conjunction
+(* expression list *)
+expr_list ::= expression (',' expression)* [',']
 
-conjunction ::= inversion ('and' inversion)+
+expression ::= or_test ['if' or_test 'else' expression]
+or_test ::= and_test | or_test 'or' and_test
+and_test ::= not_test and_test 'and' not_test
+not_test ::= comp_ops | 'not' not_test
 
-inversion ::= 'not' inversion | comparison
-
-(* Comparison operators *)
-comparison ::= bitwise_or compare_op_bitwise_or_pair+ | bitwise_or
-compare_op_bitwise_or_pair ::= eq_bitwise_or
-                             | noteq_bitwise_or
-                             | lte_bitwise_or
-                             | lt_bitwise_or
-                             | gte_bitwise_or
-                             | gt_bitwise_or
-                             | notin_bitwise_or
-                             | in_bitwise_or
-                             | isnot_bitwise_or
-                             | is_bitwise_or
-
-eq_bitwise_or ::= '==' bitwise_or
-noteq_bitwise_or ::= ('!=') bitwise_or
-lte_bitwise_or ::= ('<=') bitwise_or
-lt_bitwise_or ::= ('<') bitwise_or
-gte_bitwise_or ::= ('>=') bitwise_or
-gt_bitwise_or ::= ('>') bitwise_or
-notin_bitwise_or ::= ('not in') bitwise_or
-in_bitwise_or ::= ('in') bitwise_or
-isnot_bitwise_or ::= ('is not') bitwise_or
-is_bitwise_or ::= ('is') bitwise_or
+(* comparison operators *)
+comp_ops ::= bitwise_or (comp_operator bitwise_or)*
+comp_operator ::= '<' | '<=' | '>' | '>=' | '==' | '!='
+                | 'is' ['not'] | ['not'] 'in'
 
 (* Bitwise operators *)
 bitwise_or ::= bitwise_or '|' bitwise_xor
@@ -164,62 +135,115 @@ factor ::= '+' factor
          | '~' factor
          | power
 
-power ::= primary '**' factor
-        | primary
-
 (* Primary elements *)
-primary ::= primary '.' NAME
-          | primary '(' [arguments] ')'
-          | primary '[' slices ']'
-          | atom
+primary ::= attr_ref | func_call | slicing | atom
 
-slices ::= [expression] ':' [expression] [':' [expression]]
-         | expression
+(* attribute reference *)
+attr_ref ::= primary '.' identify
 
-atom ::= NAME
-       | 'True'
-       | 'False'
-       | 'None'
-       | strings
-       | NUMBER
-       | tuple
-       | list
-       | dict
-       | set
+(* function call *)
+func_call ::= primary '(' [arg_list] ')'
+arg_list ::= arg (',' arg)*
+arg ::= ident_arg | expression
+ident_arg ::= identify ['=' expression]
 
-(* Literals *)
-string ::= STRING
-strings ::= string+
+(* slicing *)
+slicing ::= primary '[' slice_list ']'
+slice_list ::= expression | proper_slice
+proper_slice ::= [lower_bound] ':' [upper_bound] [':' [stride]]
+lower_bound ::= expression
+upper_bound ::= expression
+stride ::=  expression
 
-list ::= '[' [expressions] ']'
-tuple ::= '(' [expressions] ')'
-set ::= '{' [expressions] '}'
+(* atomic expression *)
+atom_expr ::= identify
+            | 'True'
+            | 'False'
+            | 'None'
+            | strings
+            | number
+            | group_expr
+            | list
+            | (dict | set)
 
-(* Dicts *)
-dict ::= '{' [kvpairs] '}'
-kvpairs ::= kvpair | kvpairs ',' kvpair
-kvpair ::= expression ':' expression
+(* identifier *)
+identifier ::= ['_'] alpa alpa_num*
+alpa_num ::= alpa | dec_digit
+alpa ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
+       | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n'
+       | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u'
+       | 'v' | 'w' | 'x' | 'y' | 'z'
+       | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+       | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
+       | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
+       | 'V' | 'W' | 'X' | 'Y' | 'Z'
 
-(* function call arguments *)
-arguments ::= argumetns ',' expression | expression
+(* string literal *)
+strings ::= "'" utf8* "'" | '"' utf8* '"'
+asc ::= \x00...\x7f
+u1 ::= \x80...\xbf
+u2 ::= \xc2...\xdf u1
+u3 ::= \xe0...\xef u2 u1
+u4 ::= \xf0...\xf4 u3 u2 u1
+utf8 ::= asc | u2 | u3 | u4
 
-(* Return statement *)
-return_statement ::= 'return' [expression]
+(* number literal *)
+number ::= integer | float_point
 
-(* Raise statement *)
-raise_statement ::= 'raise' expression
+(* Integer literal *)
+integer ::= bin_int | oct_int | dec_int | hex_int
 
-(* Assert statement *)
-assert_statement ::= 'assert' expression [',' expression]
+bin_int ::= '0' ('b' | 'B')? bin_digit+
+bin_digit ::= '0' | '1'
 
-(* Compound Statement *)
-compound_stmt ::= function_def
+oct_int ::= '0' ('o' | 'O')? oct_digit+
+oct_digit ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+
+dec_int ::= nonzero_dec_digit? dec_digit*
+dec_digit ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+nonzero_dec_digit ::= '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+hex_int ::= '0' ('x' | 'X') hex_digit+
+hex_digit ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+          | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
+          | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+
+(* floating point literal *)
+float_point ::= exponent_float | point_float
+
+exponent_float ::= (point_float | dec_int) exponent
+exponent ::= ('e' | 'E') ['+' | '-'] dec_int
+point_float ::= nonzero_dec_digit+ "." dec_digit+
+
+(* group expression *)
+group_expr ::= '(' expression ')'
+
+(* list literal *)
+list ::= '[' [expr_list] ']'
+set ::= '{' [expr_list] '}'
+
+(* dictionay literal *)
+dict ::= '{' [kvs] '}'
+kvs ::= kv (',' kvpair)* [',']
+kv ::= expression ':' expression
+
+(* return statement *)
+return_stmt ::= 'return' [expression]
+
+(* raise statement *)
+raise_stmt ::= 'raise' expression
+
+(* assert statement *)
+assert_stmt ::= 'assert' expression [',' expression]
+
+(* compound statement *)
+compound_stmt ::= func_def
                 | if_statement
                 | class_def
                 | for_statement
                 | match_statement
 
-(* Class definition *)
+(* class definition *)
 class-definition ::= 'class' NAME '{' block '}'
 
 (* Function definition *)
@@ -244,6 +268,12 @@ for_statement ::= 'for' target_list 'in' expression '{' block '}'
 (* Match statement *)
 match_statement ::= 'match' expression '{' case_block+ '}'
 case_block ::= 'case' expression '{' block '}' | 'default' '{' block '}'
+
+
+
+
+
+
 
 
 ```
