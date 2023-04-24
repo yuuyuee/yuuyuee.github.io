@@ -1,7 +1,35 @@
-# The syntax of CONF in Backus-Naur form
+# The syntax of Conf in Backus-Naur form
+
+## Definition
 
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
+
+program ::= block+
+
+block ::= compound_stmt | (simple_stmt ';')
+
+(* simple statement*)
+(* assignment must precede expression, else parsing a simple assignment
+   will throw a syntax error *)
+simple_stmt ::= assign_stmt
+              | expression
+              | return_stmt
+              | raise_stmt
+              | assert_stmt
+              | 'break'
+              | 'continue'
+
+(* assignment statement *)
+assign_stmt ::= (targets '=') expressions
+targets ::= target (',' target)*
+target ::= identify | attr_ref | slicing
+
+(* expression list *)
+expressions ::= expression (',' expression)*
+
+expression ::= cond_expr
+
 (* Operator precedence and associativity
 Operators                   | Type of operation         | Associativity
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -60,80 +88,51 @@ if - else                   | conditional expression    |
 =                           | assignment expression     |
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Note:
-    all comparison operators have the same priority, which is lower
+  all comparison operators have the same priority, which is lower
 than that of arithmetic, shifting or bitwise operation.
-    comparison can be chained arbitrarily and have the interpretation
-that is conventional in mathematics. like as expression "a < b < c" is
-equivalent to "a < b and b < c"
+  comparison can be chained arbitrarily and have the interpretation
+that is conventional in mathematics. like as expression "a < b < c"
+is equivalent to "a < b and b < c".
 *)
 
-program ::= [stmts]
+(* conditional expression *)
+cond_expr ::= logic_or ['if' logic_or 'else' expression]
 
-stmts ::= stmt+
+(* logical expression *)
+logic_or ::= logic_and | logic_or 'or' logic_and
+logic_and ::= logic_not logic_and 'and' logic_not
+logic_not ::= comp_ops | 'not' logic_not
 
-stmt ::= compound_stmt | simple_stmts
-
-simple_stmts ::= simple_stmt+ ';'
-
-(* simple statement*)
-
-(* assignment must precede expression, else parsing a simple assignment
-   will throw a syntax error *)
-simple_stmt ::= assign_stmt
-              | expression
-              | return_stmt
-              | raise_stmt
-              | assert_stmt
-              | 'break'
-              | 'continue'
-
-(* assignment statement *)
-assign_stmt ::= (target_list '=')+ (expr_list)
-target_list ::= target (',' target)* [',']
-target ::= primary
-
-(* expression list *)
-expr_list ::= expression (',' expression)* [',']
-
-expression ::= or_test ['if' or_test 'else' expression]
-or_test ::= and_test | or_test 'or' and_test
-and_test ::= not_test and_test 'and' not_test
-not_test ::= comp_ops | 'not' not_test
-
-(* comparison operators *)
+(* relational expression *)
 comp_ops ::= bitwise_or (comp_operator bitwise_or)*
 comp_operator ::= '<' | '<=' | '>' | '>=' | '==' | '!='
                 | 'is' ['not'] | ['not'] 'in'
 
-(* Bitwise operators *)
-bitwise_or ::= bitwise_or '|' bitwise_xor
-             | bitwise_xor
+(* bitwise operators *)
+bitwise_or ::= bitwise_or '|' bitwise_xor | bitwise_xor
+bitwise_xor ::= bitwise_xor '^' bitwise_and | bitwise_and
+bitwise_and ::= bitwise_and '&' shift_expr | shift_expr
 
-bitwise_xor ::= bitwise_xor '^' bitwise_and
-              | bitwise_and
+(* shifting expression *)
+shift_expr ::= shift_expr ('<<' | '>>') add_expr | add_expr
 
-bitwise_and ::= bitwise_and '&' shift_expr
-              | shift_expr
+(* arithmetic operators *)
+add_expr ::= add_expr '+' mul_expr
+           | add_expr '-' mul_expr
+           | mul_expr
 
-shift_expr ::= shift_expr '<<' sum
-             | shift_expr '>>' sum
-             | sum
+mul_expr ::= mul_expr '*' unary_expr
+           | mul_expr '/' unary_expr
+           | mul_expr '//' unary_expr
+           | mul_expr '%' unary_expr
+           | unary_expr
 
-(* Arithmetic operators *)
-sum ::= sum '+' term
-      | sum '-' term
-      | term
+unary_expr ::= '+' unary_expr
+         | '-' unary_expr
+         | '~' unary_expr
+         | power_expr
 
-term ::= term '*' factor
-       | term '/' factor
-       | term '//' factor
-       | term '%' factor
-       | factor
-
-factor ::= '+' factor
-         | '-' factor
-         | '~' factor
-         | power
+power_expr ::= primary ['**' unary_expr]
 
 (* Primary elements *)
 primary ::= attr_ref | func_call | slicing | atom
@@ -144,8 +143,7 @@ attr_ref ::= primary '.' identify
 (* function call *)
 func_call ::= primary '(' [arg_list] ')'
 arg_list ::= arg (',' arg)*
-arg ::= ident_arg | expression
-ident_arg ::= identify ['=' expression]
+arg ::= identify | expression
 
 (* slicing *)
 slicing ::= primary '[' slice_list ']'
@@ -156,15 +154,15 @@ upper_bound ::= expression
 stride ::=  expression
 
 (* atomic expression *)
-atom_expr ::= identify
-            | 'True'
-            | 'False'
-            | 'None'
-            | strings
-            | number
-            | group_expr
-            | list
-            | (dict | set)
+atom ::= identify
+       | 'True'
+       | 'False'
+       | 'None'
+       | str
+       | number
+       | group_expr
+       | list
+       | (dict | set)
 
 (* identifier *)
 identifier ::= ['_'] alpa alpa_num*
@@ -177,9 +175,10 @@ alpa ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
        | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
        | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
        | 'V' | 'W' | 'X' | 'Y' | 'Z'
+       | '_'
 
 (* string literal *)
-strings ::= "'" utf8* "'" | '"' utf8* '"'
+str ::= "'" utf8* "'" | '"' utf8* '"'
 asc ::= \x00...\x7f
 u1 ::= \x80...\xbf
 u2 ::= \xc2...\xdf u1
@@ -190,7 +189,7 @@ utf8 ::= asc | u2 | u3 | u4
 (* number literal *)
 number ::= integer | float_point
 
-(* Integer literal *)
+(* integer literal *)
 integer ::= bin_int | oct_int | dec_int | hex_int
 
 bin_int ::= '0' ('b' | 'B')? bin_digit+
@@ -219,12 +218,12 @@ point_float ::= nonzero_dec_digit+ "." dec_digit+
 group_expr ::= '(' expression ')'
 
 (* list literal *)
-list ::= '[' [expr_list] ']'
-set ::= '{' [expr_list] '}'
+list ::= '[' [expressions] ']'
+set ::= '{' [expressions] '}'
 
 (* dictionay literal *)
 dict ::= '{' [kvs] '}'
-kvs ::= kv (',' kvpair)* [',']
+kvs ::= kv (',' kv)*
 kv ::= expression ':' expression
 
 (* return statement *)
@@ -238,42 +237,48 @@ assert_stmt ::= 'assert' expression [',' expression]
 
 (* compound statement *)
 compound_stmt ::= func_def
-                | if_statement
                 | class_def
-                | for_statement
-                | match_statement
+                | if_stmt
+                | for_stmt
+                | match_stmt
+
+(* function definition *)
+func_def ::= 'func' identifier '(' [params] ')' '{' block* '}'
+params ::= param (',' param)*
+param ::= identifier ['=' expression]
 
 (* class definition *)
-class-definition ::= 'class' NAME '{' block '}'
+class_def ::= 'class' identifier '{' block* '}'
 
-(* Function definition *)
-function-definition ::= 'func' NAME '(' [NAME] ')' '{' block '}'
+(* if-elif-else statement *)
+if_stmt ::= 'if' expression '{' block* '}' elif_stmt* [else_stmt]
+elif_stmt ::= 'elif' expression '{' block* }'
+else_stmt ::= 'else' '{' block* '}'
 
-block ::= statements | simple_statements
+(* for statement *)
+for_stmt ::= 'for' targets 'in' expressions '{' block* '}'
 
-(* If statement *)
-if_statement ::= 'if' expression '{' block '}' elif_statement
-               | 'if' expression '{' block '}' [else_block]
-               | 'if' expression '{' block '}'
+(* match statement *)
+match_stmt ::= 'match' expression '{' case_block+ [def_block] '}'
+case_block ::= 'case' expression '{' block* '}'
+def_block ::= 'default' '{' block* '}'
 
-elif_statement ::= 'elif' expression '{' block }' elif_statement
-                 | 'elif' expression '{' block }' [else_block]
-                 | 'elif' expression '{' block }'
+```
 
-else_block ::= 'else' '{' block '}'
+## Example
 
-(* For statement *)
-for_statement ::= 'for' target_list 'in' expression '{' block '}'
-
-(* Match statement *)
-match_statement ::= 'match' expression '{' case_block+ '}'
-case_block ::= 'case' expression '{' block '}' | 'default' '{' block '}'
+```python
+# example for DNS parser
 
 
+func main() {
 
+}
+```
 
+## Loader
 
-
+```c++
 
 
 ```
