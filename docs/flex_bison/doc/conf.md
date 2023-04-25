@@ -130,9 +130,9 @@ mul_expr ::= mul_expr '*' unary_expr
            | unary_expr
 
 unary_expr ::= '+' unary_expr
-         | '-' unary_expr
-         | '~' unary_expr
-         | power_expr
+             | '-' unary_expr
+             | '~' unary_expr
+             | power_expr
 
 power_expr ::= primary ['**' unary_expr]
 
@@ -294,6 +294,7 @@ func main(analyzer, upstrm, downstrm, output) {
     ParseDnsProtocol(downstrm)
   }
 }
+
 ```
 
 ## Analyzer template
@@ -325,10 +326,13 @@ int ext_cb(struct session_context* ctx, void* skb, struct list_head* rl) {
       reinterpret_cast<struct analyzer_info*>(ctx->analyzer);
   // strm is nullptr meaning TCP offline
   struct asm_skb* strm = reinterpret_cast<struct asm_skb*>(skb);
+
   if (strm && (strm->c.len > 0 || strm->c.len > 0)) {
     conf_interp_exec(interp, ai, 0, 0, rl);
+  } else if (strm->c.len > 0) {
+    conf_interp_exec(interp, ai, strm->c.data, strm->c.len, rl);
   } else {
-    conf
+    conf_interp_exec(interp, ai, strm->s.data, strm->s.len, rl);
   }
 
   return 0;
@@ -337,14 +341,16 @@ int ext_cb(struct session_context* ctx, void* skb, struct list_head* rl) {
 int asm_cb(void* pkt, void* as, struct list_head* rl) {
   struct analyzer_info* ai =
       reinterpret_cast<struct analyzer_info*>(ctx->analyzer);
-
+  // TODO
+  // filter for stream, like as loop-back address, protocol of
+  // the transport layer, maximum length of the packet
   return 0;
 }
 
 int asm_timeout_cb(void* as, struct list_head* rl) {
   struct assembler_info* ai =
       reinterpret_cast<struct assembler_info*>(ctx->assembler);
-
+  // TODO
   return 0;
 }
 
