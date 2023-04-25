@@ -5,29 +5,31 @@
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
 
-program ::= block+
+file ::= (class_def | func_def | assign_stmt)+
 
-block ::= compound_stmt | (simple_stmt ';')
+block ::= compound_statement | (statement ';')
 
 (* simple statement*)
 (* assignment must precede expression, else parsing a simple assignment
    will throw a syntax error *)
-simple_stmt ::= assign_stmt
-              | expression
-              | return_stmt
-              | raise_stmt
-              | assert_stmt
-              | 'break'
-              | 'continue'
+statement ::= assign_stmt
+            | expression
+            | return_stmt
+            | raise_stmt
+            | assert_stmt
+            | 'break'       (* only for_stmt and match_stmt *)
+            | 'continue'    (* only for_stmt and match_stmt *)
 
 (* assignment statement *)
 assign_stmt ::= (targets '=') expressions
+
 targets ::= target (',' target)*
 target ::= identify | attr_ref | slicing
 
 (* expression list *)
 expressions ::= expression (',' expression)*
 
+(* expression *)
 expression ::= cond_expr
 
 (* Operator precedence and associativity
@@ -142,11 +144,13 @@ attr_ref ::= primary '.' identify
 
 (* function call *)
 func_call ::= primary '(' [arg_list] ')'
+
 arg_list ::= arg (',' arg)*
 arg ::= identify | expression
 
 (* slicing *)
 slicing ::= primary '[' slice_list ']'
+
 slice_list ::= expression | proper_slice
 proper_slice ::= [lower_bound] ':' [upper_bound] [':' [stride]]
 lower_bound ::= expression
@@ -165,8 +169,9 @@ atom ::= identify
        | (dict | set)
 
 (* identifier *)
-identifier ::= ['_'] alpa alpa_num*
-alpa_num ::= alpa | dec_digit
+identifier ::= (alpa | hyphen) (alpa | hyphen | dec_digits)*
+
+hyphen ::= '_'
 alpa ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
        | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n'
        | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u'
@@ -175,10 +180,10 @@ alpa ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
        | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
        | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
        | 'V' | 'W' | 'X' | 'Y' | 'Z'
-       | '_'
 
 (* string literal *)
 str ::= "'" utf8* "'" | '"' utf8* '"'
+
 asc ::= \x00...\x7f
 u1 ::= \x80...\xbf
 u2 ::= \xc2...\xdf u1
@@ -192,27 +197,27 @@ number ::= integer | float_point
 (* integer literal *)
 integer ::= bin_int | oct_int | dec_int | hex_int
 
-bin_int ::= '0' ('b' | 'B')? bin_digit+
-bin_digit ::= '0' | '1'
+bin_int ::= '0' ('b' | 'B')? bin_digits+
+bin_digits ::= '0' | '1'
 
-oct_int ::= '0' ('o' | 'O')? oct_digit+
-oct_digit ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+oct_int ::= '0' ('o' | 'O')? oct_digits+
+oct_digits ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
 
-dec_int ::= nonzero_dec_digit? dec_digit*
-dec_digit ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-nonzero_dec_digit ::= '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+dec_int ::= nonzero_dec_digits? dec_digits*
+dec_digits ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+nonzero_dec_digits ::= '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 
-hex_int ::= '0' ('x' | 'X') hex_digit+
-hex_digit ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-          | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
-          | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+hex_int ::= '0' ('x' | 'X') hex_digits+
+hex_digits ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+             | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
+             | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
 
 (* floating point literal *)
 float_point ::= exponent_float | point_float
 
 exponent_float ::= (point_float | dec_int) exponent
 exponent ::= ('e' | 'E') ['+' | '-'] dec_int
-point_float ::= nonzero_dec_digit+ "." dec_digit+
+point_float ::= nonzero_dec_digits+ "." dec_digits+
 
 (* group expression *)
 group_expr ::= '(' expression ')'
@@ -236,22 +241,24 @@ raise_stmt ::= 'raise' expression
 assert_stmt ::= 'assert' expression [',' expression]
 
 (* compound statement *)
-compound_stmt ::= func_def
-                | class_def
-                | if_stmt
-                | for_stmt
-                | match_stmt
+compound_statement ::= func_def
+                     | class_def
+                     | if_stmt
+                     | for_stmt
+                     | match_stmt
 
 (* function definition *)
 func_def ::= 'func' identifier '(' [params] ')' '{' block* '}'
+
 params ::= param (',' param)*
 param ::= identifier ['=' expression]
 
 (* class definition *)
-class_def ::= 'class' identifier '{' block* '}'
+class_def ::= 'class' identifier '{' func_def* '}'
 
 (* if-elif-else statement *)
 if_stmt ::= 'if' expression '{' block* '}' elif_stmt* [else_stmt]
+
 elif_stmt ::= 'elif' expression '{' block* }'
 else_stmt ::= 'else' '{' block* '}'
 
@@ -259,28 +266,140 @@ else_stmt ::= 'else' '{' block* '}'
 for_stmt ::= 'for' targets 'in' expressions '{' block* '}'
 
 (* match statement *)
-match_stmt ::= 'match' expression '{' case_block+ [def_block] '}'
-case_block ::= 'case' expression '{' block* '}'
-def_block ::= 'default' '{' block* '}'
+match_stmt ::= 'match' expression '{' case_stmt+ [else_stmt] '}'
+
+case_stmt ::= 'case' expression '{' block* '}'
 
 ```
 
-## Example
+## Conf example
 
 ```python
 # example for DNS parser
 
-PROTOCOL_LIST = "998[DNS]"
+PROTOCOL = "998[DNS]"
+REGISTER_DATA = "..."
+ASM_TIMEOUT = 5
 
-func main() {
+func ParseDnsProtocol(alalyzer, strm, output) {
 
+}
+
+func main(analyzer, upstrm, downstrm, output) {
+  if len(upstrm) > 0 {
+    ParseDnsProtocol(upstrm);
+  }
+
+  if len(downstrm) > 0 {
+    ParseDnsProtocol(downstrm)
+  }
 }
 ```
 
-## Loader
+## Analyzer template
 
 ```c++
+#include <vector>
+#include <string>
 
+#include "dpi_extractor.h"
+#include "dpi_packet_assemble.h"
+#include "conf_vm.h"
+
+namespace {
+
+// conf runtime environment
+struct conf_interpreter* interp = nullptr;
+__thread struct conf_interp_context* context = nullptr;
+
+int init() {
+  const char* reg_data = nullptr;
+  conf_interp_eval(interp, "REGISTER_DATA", &reg_data);
+  rule_reg_dll_analyzer_rule(reg_data, strlen(reg_data));
+
+  // TODO: hook module need to predefined the protocol
+}
+
+int ext_cb(struct session_context* ctx, void* skb, struct list_head* rl) {
+  struct analyzer_info* ai =
+      reinterpret_cast<struct analyzer_info*>(ctx->analyzer);
+  // strm is nullptr meaning TCP offline
+  struct asm_skb* strm = reinterpret_cast<struct asm_skb*>(skb);
+  if (strm && (strm->c.len > 0 || strm->c.len > 0)) {
+    conf_interp_exec(interp, ai, 0, 0, rl);
+  } else {
+    conf
+  }
+
+  return 0;
+}
+
+int asm_cb(void* pkt, void* as, struct list_head* rl) {
+  struct analyzer_info* ai =
+      reinterpret_cast<struct analyzer_info*>(ctx->analyzer);
+
+  return 0;
+}
+
+int asm_timeout_cb(void* as, struct list_head* rl) {
+  struct assembler_info* ai =
+      reinterpret_cast<struct assembler_info*>(ctx->assembler);
+
+  return 0;
+}
+
+}  // anonymous namespace
+
+// Called before "init" in the runtime
+extern "C"
+void init_interp(const char* fname) {
+  conf_interp_init(&interp);
+  conf_interp_set_loglevel(interp, WARNING);
+  conf_interp_load(fname);
+  conf_interp_context_init(context);
+}
+
+extern "C"
+void close_interp() {
+  conf_interp_close(interp);
+  conf_interp_free(interp)
+  conf_interp_context_close(context);
+  conf_interp_context_free(context);
+}
+
+extern "C"
+void get_support_list(char** list) {
+  const char* proto = nullptr;
+  conf_interp_eval(interp, "PROTOCOL", &proto);
+  *list = reinterpret_cast<char*>(&proto);
+}
+
+extern "C"
+void get_extractor(struct extractor_array* ext_array) {
+  ext_array->extractor[0].init = init;
+  ext_array->extractor[0].several_handle = ext_cb;
+  ext_array->extractor[0].assem_handle = asm_cb;
+  ext_array->extractor[0].assem_timeout = asm_timeout_cb;
+  int timeout = 5;
+  conf_interp_eval(interp, "ASM_TIMEOUT", &timeout);
+  ext_array->extractor[0].timeout = timeout;
+  const char* proto = nullptr;
+  conf_interp_eval(interp, "PROTOCOL", &proto);
+  std::string str(proto);
+  str = str.substr(0, str.find('['));
+  ext_array->extractor[0].init = std::stod(str);
+  ext_array->num = 1;
+}
+
+extern "C"
+void get_statistics(struct extractor_statistics_array* st_array) {
+  st_array->num = 0;
+}
+
+extern "C"
+void dpi_open_native_log_switch(uint32_t v) {
+  conf_parser_set_loglevel(&parser, v == DPI_LOG_ON ? DEBUG : WARNING);
+}
 
 
 ```
