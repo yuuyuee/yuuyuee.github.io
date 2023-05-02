@@ -24,7 +24,7 @@ statement ::= assign_stmt
 assign_stmt ::= (targets '=') expressions
 
 targets ::= target (',' target)*
-target ::= identify | attr_ref | slicing
+target ::= identifier | attr_ref | slicing
 
 (* expression list *)
 expressions ::= expression (',' expression)*
@@ -136,17 +136,17 @@ unary_expr ::= '+' unary_expr
 
 power_expr ::= primary ['**' unary_expr]
 
-(* Primary elements *)
+(* primary elements *)
 primary ::= attr_ref | func_call | slicing | atom
 
 (* attribute reference *)
-attr_ref ::= primary '.' identify
+attr_ref ::= primary '.' identifier
 
 (* function call *)
 func_call ::= primary '(' [arg_list] ')'
 
 arg_list ::= arg (',' arg)*
-arg ::= identify | expression
+arg ::= identifier | expression
 
 (* slicing *)
 slicing ::= primary '[' slice_list ']'
@@ -158,7 +158,7 @@ upper_bound ::= expression
 stride ::=  expression
 
 (* atomic expression *)
-atom ::= identify
+atom ::= identifier
        | 'True'
        | 'False'
        | 'None'
@@ -172,23 +172,16 @@ atom ::= identify
 identifier ::= (alpa | hyphen) (alpa | hyphen | dec_digits)*
 
 hyphen ::= '_'
-alpa ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
-       | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n'
-       | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u'
-       | 'v' | 'w' | 'x' | 'y' | 'z'
-       | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
-       | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
-       | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
-       | 'V' | 'W' | 'X' | 'Y' | 'Z'
+alpa ::= 'a'..'z' | 'A'..'Z'
 
 (* string literal *)
 str ::= "'" utf8* "'" | '"' utf8* '"'
 
-asc ::= \x00...\x7f
-u1 ::= \x80...\xbf
-u2 ::= \xc2...\xdf u1
-u3 ::= \xe0...\xef u2 u1
-u4 ::= \xf0...\xf4 u3 u2 u1
+asc ::= \x00..\x7f
+u1 ::= \x80..\xbf
+u2 ::= \xc2..\xdf u1
+u3 ::= \xe0..\xef u2 u1
+u4 ::= \xf0..\xf4 u3 u2 u1
 utf8 ::= asc | u2 | u3 | u4
 
 (* number literal *)
@@ -197,27 +190,25 @@ number ::= integer | float_point
 (* integer literal *)
 integer ::= bin_int | oct_int | dec_int | hex_int
 
-bin_int ::= '0' ('b' | 'B')? bin_digits+
+bin_int ::= '0' ('b' | 'B') bin_digits+
 bin_digits ::= '0' | '1'
 
-oct_int ::= '0' ('o' | 'O')? oct_digits+
-oct_digits ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+oct_int ::= '0' ('o' | 'O') oct_digits+
+oct_digits ::= '0'..'7'
 
-dec_int ::= nonzero_dec_digits? dec_digits*
-dec_digits ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-nonzero_dec_digits ::= '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+dec_int ::= nonzero_dec_digits dec_digits*
+dec_digits ::= '0'..'9'
+nonzero_dec_digits ::= '1'..'9'
 
 hex_int ::= '0' ('x' | 'X') hex_digits+
-hex_digits ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-             | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
-             | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+hex_digits ::= '0'..'9' | 'a'..'f' | 'A'..'F'
 
 (* floating point literal *)
 float_point ::= exponent_float | point_float
 
 exponent_float ::= (point_float | dec_int) exponent
 exponent ::= ('e' | 'E') ['+' | '-'] dec_int
-point_float ::= nonzero_dec_digits+ "." dec_digits+
+point_float ::= dec_int '.' dec_digits+
 
 (* group expression *)
 group_expr ::= '(' expression ')'
