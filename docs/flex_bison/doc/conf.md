@@ -119,20 +119,12 @@ bitwise_and ::= bitwise_and '&' shift_expr | shift_expr
 shift_expr ::= shift_expr ('<<' | '>>') add_expr | add_expr
 
 (* arithmetic operators *)
-add_expr ::= add_expr '+' mul_expr
-           | add_expr '-' mul_expr
-           | mul_expr
+add_expr ::= add_expr ('+' | '-') mul_expr | mul_expr
 
-mul_expr ::= mul_expr '*' unary_expr
-           | mul_expr '/' unary_expr
-           | mul_expr '//' unary_expr
-           | mul_expr '%' unary_expr
-           | unary_expr
+mul_operator ::= '*' | '/' | '//' | '%'
+mul_expr ::= mul_expr mul_operator unary_expr | unary_expr
 
-unary_expr ::= '+' unary_expr
-             | '-' unary_expr
-             | '~' unary_expr
-             | power_expr
+unary_expr ::= ('+' | '-' | '~') unary_expr | power_expr
 
 power_expr ::= primary ['**' unary_expr]
 
