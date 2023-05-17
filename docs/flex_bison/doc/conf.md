@@ -260,7 +260,7 @@ case_stmt ::= 'case' expression '{' block* '}'
 ```python
 # example for DNS parser
 
-PROTOCOL = "998[DNS]"
+PROTOCOL = 998
 REGISTER_DATA = "..."
 ASM_TIMEOUT = 5
 
