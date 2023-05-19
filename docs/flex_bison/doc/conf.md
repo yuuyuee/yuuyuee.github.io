@@ -1,6 +1,6 @@
 # The syntax of Conf in Backus-Naur form
 
-## Definition
+## Lexical definition
 
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
@@ -255,26 +255,51 @@ case_stmt ::= 'case' expression '{' block* '}'
 
 ```
 
+## Grammar definition
+
+1. number
+2. float
+3. bytes
+4. string
+5. list
+6. set
+7. dict
+8. class -> dict and member function
+
 ## Conf example
 
 ```python
 # example for DNS parser
 
 PROTOCOL = 998
-REGISTER_DATA = "..."
-ASM_TIMEOUT = 5
 
-func ParseDnsProtocol(alalyzer, strm, output) {
-
-}
+ASSEMBER = None
 
 func main(analyzer, upstrm, downstrm, output) {
-  if len(upstrm) > 0 {
-    ParseDnsProtocol(upstrm);
-  }
+  hdr = struct.add_fmt(">HHHHHH", {1: "flags", 2: "que_cnt", 3: "ans_cnt"}).unpack(buf)
+  if header.flags >> 15 == 1 {
+    hosts = []
+    for i in range(0, hdr.que_cnt) {
+      que = struct.add_fmt(">sHH", {0: "host"}).unpack(buf);
+      hosts.add(que.host);
+    }
 
-  if len(downstrm) > 0 {
-    ParseDnsProtocol(downstrm)
+    ips = []
+    for i in range(0, hdr.ans_cnt) {
+      ans = struct.add_fmt(">HHHIH", {4: "len"}).unpack(buf)
+      ip = struct.add_fmt("{}s".format(ans.len), {0: "ip"}).unpack(buf);
+      ips.add(ip)
+    }
+
+    if not hosts.empty() and not ips.empty() {
+      output.action_type = "0000";
+      output.entity_type = "0000";
+      output.conf_id = "0000000000000000";
+      output.app_type = "0000000";
+      output.proto_type = "000000000";
+      output.domain = ",".join(hosts)
+      output.ips = ",".join(ips);
+    }
   }
 }
 
