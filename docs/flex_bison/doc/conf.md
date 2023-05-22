@@ -5,9 +5,11 @@
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
 
-file ::= (class_def | func_def | assign_stmt)+
+stmts ::= (class_def | func_def | assign_stmt)+
 
 block ::= compound_statement | (statement ';')
+
+annotation ::= '@' func_call
 
 (* simple statement*)
 (* assignment must precede expression, else parsing a simple assignment
@@ -23,7 +25,7 @@ statement ::= assign_stmt
 (* assignment statement *)
 assign_stmt ::= (targets '=') expressions
 
-targets ::= target (',' target)*
+targets ::= target (',' target)* | annotation identifier
 target ::= identifier | attr_ref | slicing
 
 (* expression list *)
@@ -231,7 +233,7 @@ compound_statement ::= func_def
                      | match_stmt
 
 (* function definition *)
-func_def ::= 'func' identifier '(' [params] ')' '{' block* '}'
+func_def ::= [annotation] 'func' identifier '(' [params] ')' '{' block* '}'
 
 params ::= param (',' param)*
 param ::= identifier ['=' expression]
@@ -271,10 +273,13 @@ case_stmt ::= 'case' expression '{' block* '}'
 ```python
 # example for DNS parser
 
+@attribute("protocol")
 PROTOCOL = 998
 
+@attribute("assember")
 ASSEMBER = None
 
+@attribte("analyzer")
 func main(analyzer, upstrm, downstrm, output) {
   hdr = struct.add_fmt(">HHHHHH", {1: "flags", 2: "que_cnt", 3: "ans_cnt"}).unpack(buf)
   if header.flags >> 15 == 1 {
