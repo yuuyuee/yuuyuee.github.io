@@ -21,7 +21,7 @@
 #include <limits.h>
 #include <string.h>
 
-#define YY_USER_INIT printf("user init\n");
+#define YY_USER_INIT
 
 %}
 
