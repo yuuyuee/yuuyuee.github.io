@@ -1,0 +1,6 @@
+private before # this is an comments
+private after
+
+# this is an comments
+
+end of private

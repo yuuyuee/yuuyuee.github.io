@@ -18,26 +18,80 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <string.h>
 
 #define YY_USER_INIT printf("user init\n");
 
 %}
 
+/* options: [no] <option>
+  7bit, 8bit
+  always-interactive, nteractive, never-interactive
+  array, pointer
+  ansi-definitions, ansi-prototypes
+  backup
+  batch
+  bison-bridge
+  bison-locations
+  c++
+  casefull | case-sensitive
+  caseless | case-insensitive
+  debug
+  default
+  ecs
+  fast
+  full
+  input
+  lex-compat
+  posix-compat
+  main
+  meta-ecs
+  perf-report
+  read
+  reentrant
+  reject
+  stack
+  stdinit
+  stdout
+  unistd
+  unput
+  verbose
+  warn
+  yylineno
+  yymore
+  yywrap
+  yy_push_state, yy_pop_state, yy_top_state
+  yy_scan_buffer, yy_scan_bytes, yy_scan_string
+  yyalloc, yyrealloc, yyfree
+  yyget_debug, yyset_debug
+  yyget_extra, yyset_extra
+  yyget_leng
+  yyget_text
+  yyget_lineno, yyset_lineno
+  yyget_in, yyset_in
+  yyget_out, yyset_out
+  yyget_lval, yyset_lval
+  yyget_lloc, yyset_lloc
+  extra-type
+  outfile
+  prefix
+  yyclass
+  header(-file)?
+  tables-file
+  tables-verify
+*/
+
 /* option definition from */
-%option noyywrap
-%option yylineno
-%option debug
-/* %option c++ */
+%option noyywrap nodefault nomain noreject nostdinit nounput
+%option yylineno reentrant
+/* %option bison-bridge bison-locations */
 %option perf-report
-/* %option verbose */
 /* %option prefix=oak */
 %pointer
 
 /* start conditions */
-%s START_COND1
-%s START_COND2
-%x START_COND3
-%x START_COND4
+%x IMPORT
 
 /* name definition form
   <name> <definition>
@@ -57,6 +111,19 @@
 
 DIGIT [0-9]
 WS [ \t]
+
+%{
+  // printf("on declartion statement\n");
+#define MAX_FILES 6
+  struct Context {
+    char filename[PATH_MAX][MAX_FILES];
+    int current_filename;
+  };
+
+  void InitContext(struct Context* context);
+  void PushFile(yyscan_t scanner, const char* fname);
+  void PopFile(yyscan_t scanner);
+%}
 
 /**
  * rules section
@@ -226,31 +293,55 @@ WS [ \t]
 %%
 
 %{
-// printf("start lexical analysis\n");
+  // printf("on rule statement\n");
 %}
 
-{WS}+ {
-  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
-  // return 1;
+^import BEGIN IMPORT;
+
+<IMPORT>{
+  [ \t]*  { /* eat the whiltespace */ }
+
+  [^ \t\n#]+ {
+    while (input(yyscanner) != '\n') {}
+    PushFile(yyscanner, yytext);
+    BEGIN INITIAL;
+  }
+
+  .|\n {
+    printf("bad import in line %d:%d\n", yylineno, yycolumn);
+    yyterminate();
+  }
+
 }
 
+"#". {
+  while (input(yyscanner) != '\n') {}
+}
+
+{WS}+ {}
+
 {DIGIT}+ {
-  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
-  // return 2;
+  struct Context* context = (struct Context*) yyget_extra(yyscanner);
+  printf("Recognized symbol at file '%s' line %d:%d: %s\n",
+          context->filename[context->current_filename], yylineno, yycolumn, yytext);
 }
 
 [a-z]+ {
-  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
-  // return 3;
+  struct Context* context = (struct Context*) yyget_extra(yyscanner);
+  printf("Recognized symbol at file '%s' line %d:%d: %s\n",
+          context->filename[context->current_filename], yylineno, yycolumn, yytext);
 }
 
-. {
-  printf("Recognized symbol at line %d: %s\n", yylineno, yytext);
-  // return 4;
-}
+^\n |
+\n  ;
+
+. {}
 
 <<EOF>> {
-  yyterminate();
+  PopFile(yyscanner);
+  struct Context* context = (struct Context*) yyget_extra(yyscanner);
+  if (context->current_filename < 0)
+    yyterminate();
 }
 
 %% /* if user code section is missing, the second "%%" may be skipped. */
@@ -306,33 +397,51 @@ WS [ \t]
  * - YY_USER_ACTION callling in the first of each action
  */
 
+
+
+void InitContext(struct Context* context) {
+  memset(context, 0, sizeof(*context));
+  context->current_filename = -1;
+}
+
+void PushFile(yyscan_t scanner, const char* fname) {
+  struct Context* context = (struct Context*) yyget_extra(scanner);
+  assert(context != NULL);
+  assert(context->current_filename + 1 < MAX_FILES);
+
+  context->current_filename += 1;
+  memcpy(context->filename[context->current_filename],
+         fname, strlen(fname));
+  FILE* fp = fopen(fname, "rb");
+  assert(fp != NULL);
+  YY_BUFFER_STATE bs = yy_create_buffer(fp, YY_BUF_SIZE, scanner);
+  yypush_buffer_state(bs, scanner);
+}
+
+void PopFile(yyscan_t scanner) {
+  struct Context* context = (struct Context*) yyget_extra(scanner);
+  assert(context != NULL);
+  context->current_filename -= 1;
+  yypop_buffer_state(scanner);
+}
+
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        printf("Usage: %s files...\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
+  if (argc != 2) {
+      printf("Usage: %s file\n", argv[0]);
+      exit(EXIT_FAILURE);
+  }
 
-    for (int i = 1; i < argc; ++i) {
-        const char* fname = argv[i];
-        struct stat state;
-        if (stat(fname, &state) != 0 || state.st_size == 0)
-            continue;
-        char* buf = malloc(state.st_size);
-        FILE* fp = fopen(fname, "rb");
-        if (fread(buf, state.st_size, 1, fp) != 1) {
-          printf("read file %s failed\n", fname);
-          free(buf);
-          fclose(fp);
-          continue;
-        }
-        fclose(fp);
-        YY_BUFFER_STATE bs = yy_scan_bytes(buf, state.st_size);
-        while (yylex() != 0) {
-            /* TODO */
-        }
-        yy_delete_buffer(bs);
-        free(buf);
-    }
+  struct Context context;
+  InitContext(&context);
 
-    return 0;
+  yyscan_t scanner;
+  yylex_init_extra(&context, &scanner);
+  yyset_debug(1, scanner);
+  PushFile(scanner, argv[1]);
+  while (yylex(scanner) != 0) {}
+  PopFile(scanner);
+
+  yylex_destroy(scanner);
+
+  return 0;
 }
