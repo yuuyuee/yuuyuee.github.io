@@ -22,6 +22,7 @@
 #include <string.h>
 
 #define YY_USER_INIT
+#define YY_USER_ACTION do { yycolumn += yyleng; } while (0);
 
 %}
 
@@ -303,6 +304,7 @@ WS [ \t]
 
   [^ \t\n#]+ {
     while (input(yyscanner) != '\n') {}
+    yycolumn = 1;
     PushFile(yyscanner, yytext);
     BEGIN INITIAL;
   }
@@ -333,7 +335,7 @@ WS [ \t]
 }
 
 ^\n |
-\n  ;
+\n  { yycolumn = 1; }
 
 . {}
 
