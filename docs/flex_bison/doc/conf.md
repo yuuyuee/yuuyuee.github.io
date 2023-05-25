@@ -5,22 +5,22 @@
 ```EBNF
 (* The syntax of Conf in Backus-Naur Form. *)
 
-stmts ::= (class_def | func_def | assign_stmt)+
+program ::= (class_def | func_def | assign_stmt)+
 
-block ::= compound_statement | (statement ';')
+block ::= '{' (compound_statement | statement)* '}'
 
 annotation ::= '@' func_call
 
 (* simple statement*)
 (* assignment must precede expression, else parsing a simple assignment
    will throw a syntax error *)
-statement ::= assign_stmt
-            | expression
-            | return_stmt
-            | raise_stmt
-            | assert_stmt
-            | 'break'       (* only for_stmt and match_stmt *)
-            | 'continue'    (* only for_stmt and match_stmt *)
+statement ::= assign_stmt ';'
+            | expression ';'
+            | return_stmt ';'
+            | raise_stmt ';'
+            | assert_stmt ';'
+            | 'break' ';'     (* only for_stmt and match_stmt *)
+            | 'continue' ';'  (* only for_stmt and match_stmt *)
 
 (* assignment statement *)
 assign_stmt ::= (targets '=') expressions
@@ -233,8 +233,10 @@ compound_statement ::= func_def
                      | match_stmt
 
 (* function definition *)
-func_def ::= [annotation] 'func' identifier '(' [params] ')' '{' block* '}'
+func_def ::= [annotation] 'func' identifier '(' [param_list] ')' block
 
+param_list ::= params [',' v_param] | v_param
+v_param ::= '...'
 params ::= param (',' param)*
 param ::= identifier ['=' expression]
 
@@ -242,31 +244,21 @@ param ::= identifier ['=' expression]
 class_def ::= 'class' identifier '{' func_def* '}'
 
 (* if-elif-else statement *)
-if_stmt ::= 'if' expression '{' block* '}' elif_stmt* [else_stmt]
+if_stmt ::= 'if' expression block elif_stmt* [else_stmt]
 
-elif_stmt ::= 'elif' expression '{' block* }'
-else_stmt ::= 'else' '{' block* '}'
+elif_stmt ::= 'elif' expression block
+else_stmt ::= 'else' block
 
 (* for statement *)
-for_stmt ::= 'for' targets 'in' expressions '{' block* '}'
+for_stmt ::= 'for' targets 'in' expressions block
 
 (* match statement *)
-match_stmt ::= 'match' expression '{' case_stmt+ [else_stmt] '}'
+match_stmt ::= 'match' expression '{' case_stmt+ [default_stmt] '}'
 
-case_stmt ::= 'case' expression '{' block* '}'
+case_stmt ::= 'case' expression block
+default_stmt ::= 'default' block
 
 ```
-
-## Grammar definition
-
-1. number
-2. float
-3. bytes
-4. string
-5. list
-6. set
-7. dict
-8. class -> dict and member function
 
 ## Conf example
 
@@ -307,118 +299,5 @@ func main(analyzer, upstrm, downstrm, output) {
     }
   }
 }
-
-```
-
-## Analyzer template
-
-```c++
-#include <vector>
-#include <string>
-
-#include "dpi_extractor.h"
-#include "dpi_packet_assemble.h"
-#include "conf_vm.h"
-
-namespace {
-
-// conf runtime environment
-struct conf_interpreter* interp = nullptr;
-__thread struct conf_interp_context* context = nullptr;
-
-int init() {
-  const char* reg_data = nullptr;
-  conf_interp_eval(interp, "REGISTER_DATA", &reg_data);
-  rule_reg_dll_analyzer_rule(reg_data, strlen(reg_data));
-
-  // TODO: hook module need to predefined the protocol
-}
-
-int ext_cb(struct session_context* ctx, void* skb, struct list_head* rl) {
-  struct analyzer_info* ai =
-      reinterpret_cast<struct analyzer_info*>(ctx->analyzer);
-  // strm is nullptr meaning TCP offline
-  struct asm_skb* strm = reinterpret_cast<struct asm_skb*>(skb);
-
-  if (strm && (strm->c.len > 0 || strm->c.len > 0)) {
-    conf_interp_exec(interp, ai, 0, 0, rl);
-  } else if (strm->c.len > 0) {
-    conf_interp_exec(interp, ai, strm->c.data, strm->c.len, rl);
-  } else {
-    conf_interp_exec(interp, ai, strm->s.data, strm->s.len, rl);
-  }
-
-  return 0;
-}
-
-int asm_cb(void* pkt, void* as, struct list_head* rl) {
-  struct analyzer_info* ai =
-      reinterpret_cast<struct analyzer_info*>(ctx->analyzer);
-  // TODO
-  // filter for stream, like as loop-back address, protocol of
-  // the transport layer, maximum length of the packet
-  return 0;
-}
-
-int asm_timeout_cb(void* as, struct list_head* rl) {
-  struct assembler_info* ai =
-      reinterpret_cast<struct assembler_info*>(ctx->assembler);
-  // TODO
-  return 0;
-}
-
-}  // anonymous namespace
-
-// Called before "init" in the runtime
-extern "C"
-void init_interp(const char* fname) {
-  conf_interp_init(&interp);
-  conf_interp_set_loglevel(interp, WARNING);
-  conf_interp_load(fname);
-  conf_interp_context_init(context);
-}
-
-extern "C"
-void close_interp() {
-  conf_interp_close(interp);
-  conf_interp_free(interp)
-  conf_interp_context_close(context);
-  conf_interp_context_free(context);
-}
-
-extern "C"
-void get_support_list(char** list) {
-  const char* proto = nullptr;
-  conf_interp_eval(interp, "PROTOCOL", &proto);
-  *list = reinterpret_cast<char*>(&proto);
-}
-
-extern "C"
-void get_extractor(struct extractor_array* ext_array) {
-  ext_array->extractor[0].init = init;
-  ext_array->extractor[0].several_handle = ext_cb;
-  ext_array->extractor[0].assem_handle = asm_cb;
-  ext_array->extractor[0].assem_timeout = asm_timeout_cb;
-  int timeout = 5;
-  conf_interp_eval(interp, "ASM_TIMEOUT", &timeout);
-  ext_array->extractor[0].timeout = timeout;
-  const char* proto = nullptr;
-  conf_interp_eval(interp, "PROTOCOL", &proto);
-  std::string str(proto);
-  str = str.substr(0, str.find('['));
-  ext_array->extractor[0].init = std::stod(str);
-  ext_array->num = 1;
-}
-
-extern "C"
-void get_statistics(struct extractor_statistics_array* st_array) {
-  st_array->num = 0;
-}
-
-extern "C"
-void dpi_open_native_log_switch(uint32_t v) {
-  conf_parser_set_loglevel(&parser, v == DPI_LOG_ON ? DEBUG : WARNING);
-}
-
 
 ```
