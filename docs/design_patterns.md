@@ -8,7 +8,11 @@ Creational design patterns provide various object creation mechanisms, which inc
 
 ### Factory Method
 
+#### Simple Factory (Parametrized Factory Method)
+
 ### Abstract Factory
+
+#### Parameterized Abstract Factory
 
 ### Builder
 
