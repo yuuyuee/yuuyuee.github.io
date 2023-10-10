@@ -235,3 +235,53 @@ A ::= a B | a
 (* EBNF *)
 A ::= a [B]
 ```
+
+## Bison
+
+```bison
+/// Semantic value type for YYSTYPE
+%define api.value.type {int}  // default
+%define api.value.type {double}
+%define api.value.type {struct semantic_value_type}
+// or
+#define YYSTYPE struct semantic_value_type;
+
+%union {
+  double number;
+  int var;
+  double exp;
+}
+
+
+/// %define api.prefix {xxx}
+variable is start with prefix instead of "yy".
+  yyparse, yylex, yyerror, yynerrs, yyval, yylloc, yychar, yydebug
+macros is start with prefix instead of "YY".
+
+/// %code :directive inserts code into output parser source at a locations.
+
+%code {code} or %{code%}
+inserts code into parser implementation file after the usal content of the parser header file.
+
+%code requires {code}
+This is the best place to write dependency code required by the YYSTYPE and YYLTYPE.
+The parser header file and parser implementation file before the definition of the YYSTYPE and YYLTYPE.
+
+%code provides {code}
+This is the best place to write additional definitions and declarations that should be provided to other modules.
+The parser header file and parser implementation file before the definition of the YYSTYPE, YYLTYPE, and token definition.
+
+%code top {code}
+The unqualified %code or %code requires should usually be more appropriate than %code top.
+Near the top of the parser implementation file.
+
+/// Parse function
+int yyparse()
+0 - successful
+1 - parsing failed
+2 - memory exhaustion
+
+YYACCEPT - return 0
+YYABORT - return 1
+YYNOMEM - return 2
+```

@@ -1,7 +1,0 @@
- public before
-import priv # this is an comments
-public            after
-
-# this is an comments
-import priv2
-end of public
