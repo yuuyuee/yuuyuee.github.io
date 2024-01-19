@@ -87,8 +87,8 @@ __asm__("mov1 %bh, (%eax)");
 __asm__(
 	"movl %eax, %bx \n\t"
     "movl $56, %esi \n\t"
-    "mol %ecx, $label(%edx, %ebx, $4) \n\t"
-    "mob %ah, (%ebx)"
+    "movl %ecx, $label(%edx, %ebx, $4) \n\t"
+    "movb %ah, (%ebx)"
 );
 ```
 
