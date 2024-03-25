@@ -9,6 +9,22 @@
 
 ## Lua API
 
+### Basic types
+
+```C
+#define LUA_TNONE           (-1)
+
+#define LUA_TNIL            0
+#define LUA_TBOOLEAN        1
+#define LUA_TLIGHTUSERDATA  2
+#define LUA_TNUMBER         3
+#define LUA_TSTRING         4
+#define LUA_TTABLE          5
+#define LUA_TFUNCTION       6
+#define LUA_TUSERDATA       7
+#define LUA_TTHREAD         8
+```
+
 ### Pseudo-indicess
 
 ```C
@@ -38,11 +54,38 @@ LUA_API lua_CFunction lua_atpanic(lua_State *L, lua_CFunction panicf);
 ```C
 LUA_API int lua_gettop(lua_State *L);
 LUA_API void lua_settop(lua_State *L, int idx);
+
+// [-0, +1, –]
+// Pushes a copy of the element at the given index onto the stack.
 LUA_API void lua_pushvalue(lua_State *L, int idx);
+
+// [-1, +0, –]
+// Removes the element at the given valid index, shifting down
+// the elements above this index to fill the gap. This function
+// cannot be called with a pseudo-index, because a pseudo-index
+// is not an actual stack position.
 LUA_API void lua_remove(lua_State *L, int idx);
+
+// [-1, +1, –]
+// Moves the top element into the given valid index, shifting up
+// the elements above this index to open space. This function cannot
+// be called with a pseudo-index, because a pseudo-index is not
+// an actual stack position.
 LUA_API void lua_insert(lua_State *L, int idx);
+
+//  [-1, +0, –]
+// Moves the top element into the given valid index without shifting
+// any element (therefore replacing the value at that given index),
+// and then pops the top element.
 LUA_API void lua_replace(lua_State *L, int idx);
+
+//  [-0, +0, –]
+// Ensures that the stack has space for at least n extra slots.
 LUA_API int lua_checkstack(lua_State *L, int sz);
+
+// [-?, +?, –]
+// Exchange values between different threads of the same state.
+// This function pops n values from the stack from, and pushes them onto the stack to.
 LUA_API void lua_xmove(lua_State *from, lua_State *to, int n);
 ```
 
@@ -104,22 +147,56 @@ LUA_API void lua_getfenv(lua_State *L, int idx);
 ### Set functions (stack -> Lua)
 
 ```C
+//  [-2, +0, e]
+//  Does the equivalent to t[k] = v, where t is the value at the given
+// index, v is the value at the top of the stack, and k is the value
+// just below the top.
+// This function pops both the key and the value from the stack.
+// As in Lua, this function may trigger a metamethod for the "newindex"
+// event.
 LUA_API void lua_settable(lua_State *L, int idx);
+
 //  [-1, +0, e]
 // Does the equivalent to t[k] = v, where t is the value
 // at the given index and v is the value at the top of the stack.
 // This function pops the value from the stack. As in Lua,
 // this function may trigger a metamethod for the "newindex" event.
 LUA_API void lua_setfield(lua_State *L, int idx, const char *k);
+
+// [-2, +0, m]
+// Similar to lua_settable, but does a raw assignment (i.e., without metamethods).
 LUA_API void lua_rawset(lua_State *L, int idx);
+
+// [-1, +0, m]
+// Does the equivalent of t[i] = v, where t is the table at the given
+// index and v is the value at the top of the stack.
+// This function pops the value from the stack.
+// The assignment is raw, that is, it does not invoke the __newindex metamethod.
 LUA_API void lua_rawseti(lua_State *L, int idx, int n);
+
+// [-1, +0, –]
+//  Pops a table from the stack and sets it as the new metatable
+// for the value at the given index.
 LUA_API int lua_setmetatable(lua_State *L, int objindex);
+
+// Lua 5.1
+// [-1, +0, -]
+// Pops a table from the stack and sets it as the new environment
+// for the value at the given index.
+// If the value at the given index is neither a function nor a thread
+// nor a userdata, lua_setfenv returns 0. Otherwise it returns 1.
 LUA_API int lua_setfenv(lua_State *L, int idx);
 ```
 
 ### `load` and `call` functions (load and run Lua code)
 
 ```C
+// first, the function to be called is pushed onto the stack;
+// second, the arguments to the function are pushed in direct order
+// ( first argument is pushed first);
+// All arguments and the function value are popped from the stack
+// when the function is called.
+// The function results are pushed onto the stack when the function returns.
 LUA_API void lua_call(lua_State *L, int nargs, int nresults);
 LUA_API int lua_pcall(lua_State *L, int nargs, int nresults, int errfunc);
 LUA_API int lua_cpcall(lua_State *L, lua_CFunction func, void *ud);
@@ -155,10 +232,42 @@ LUA_API int lua_gc(lua_State *L, int what, int data);
 ### Miscellaneous functions
 
 ```C
+// [-1, +0, v]
+// Generates a Lua error, using the value at the top of the stack
+// as the error object. This function does a long jump, and therefore
+// never returns (see luaL_error).
 LUA_API int lua_error(lua_State *L);
+
+// [-0, +0, v]
+// Raises an error. The error message format is given by fmt
+// plus any extra arguments, following the same rules of lua_pushfstring.
+// It also adds at the beginning of the message the file name
+// and the line number where the error occurred, if this information
+// is available. This function never returns, but it is an idiom to use it
+// in C functions as return luaL_error(args).
+LUALIB_API int luaL_error(lua_State *L, const char *fmt, ...);
+
+// [-1, +(2|0), e]
+// Pops a key from the stack, and pushes a key–value pair from the table
+// at the given index. If there are no more elements in the table, then
+// lua_next returns 0 (and pushes nothing).
 LUA_API int lua_next(lua_State *L, int idx);
+
+// [-n, +1, e]
+// Concatenates the n values at the top of the stack, pops them,
+// and leaves the result at the top.
+// If n is 1, the result is the single value on the stack (that is, the function does nothing);
+// if n is 0, the result is the empty string.
+// Concatenation is performed following the usual semantics of Lua.
 LUA_API void lua_concat(lua_State *L, int n);
+
+// [-0, +0, -]
+// Returns the memory-allocation function of a given state.
+// If ud is not NULL, Lua stores in *ud the opaque pointer passed to lua_newstate.
 LUA_API lua_Alloc lua_getallocf(lua_State *L, void **ud);
+
+// [-0, +0, -]
+// Changes the allocator function of a given state to f with user data ud.
 LUA_API void lua_setallocf(lua_State *L, lua_Alloc f, void *ud);
 ```
 
@@ -182,6 +291,7 @@ LUA_API void lua_setallocf(lua_State *L, lua_Alloc f, void *ud);
 #define lua_isnoneornil(L, n) (lua_type(L, (n)) <= 0)
 #define lua_pushliteral(L, s) \
     lua_pushlstring(L, "" s, (sizeof(s)/sizeof(char))-1)
+// Pops a value from the stack and sets it as the new value of global name.
 #define lua_setglobal(L,s) lua_setfield(L, LUA_GLOBALSINDEX, (s))
 #define lua_getglobal(L,s) lua_getfield(L, LUA_GLOBALSINDEX, (s))
 #define lua_tostring(L,i) lua_tolstring(L, (i), NULL)
@@ -337,7 +447,6 @@ LUALIB_API int luaL_newmetatable(lua_State *L, const char *tname);
 LUALIB_API void* luaL_checkudata(lua_State *L, int ud, const char *tname);
 
 LUALIB_API void luaL_where(lua_State *L, int lvl);
-LUALIB_API int luaL_error(lua_State *L, const char *fmt, ...);
 
 LUALIB_API int luaL_checkoption(lua_State *L, int narg, const char *def,
                                 const char *const lst[]);
@@ -346,6 +455,11 @@ LUALIB_API int luaL_checkoption(lua_State *L, int narg, const char *def,
 #define LUA_NOREF       (-2)
 #define LUA_REFNIL      (-1)
 
+// [-1, +0, m]
+// Creates and returns a reference, in the table at index t, for the object
+// at the top of the stack (and pops the object).
+// Retrieve an object referred by reference r by calling lua_rawgeti(L, t, r).
+// Function luaL_unref frees a reference and its associated object.
 LUALIB_API int luaL_ref(lua_State *L, int t);
 LUALIB_API void luaL_unref(lua_State *L, int t, int ref);
 
@@ -401,4 +515,44 @@ LUALIB_API void luaL_addlstring(luaL_Buffer *B, const char *s, size_t l);
 LUALIB_API void luaL_addstring(luaL_Buffer *B, const char *s);
 LUALIB_API void luaL_addvalue(luaL_Buffer *B);
 LUALIB_API void luaL_pushresult(luaL_Buffer *B);
+```
+
+### LuaJIT
+
+```C
+enum {
+  LUAJIT_MODE_ENGINE,           /* Set mode for whole JIT engine. */
+  LUAJIT_MODE_DEBUG,            /* Set debug mode (idx = level). */
+
+  LUAJIT_MODE_FUNC,             /* Change mode for a function. */
+  LUAJIT_MODE_ALLFUNC,          /* Recurse into subroutine protos. */
+  LUAJIT_MODE_ALLSUBFUNC,       /* Change only the subroutines. */
+
+  LUAJIT_MODE_TRACE,            /* Flush a compiled trace. */
+  LUAJIT_MODE_WRAPCFUNC = 0x10, /* Set wrapper mode for C function calls. */
+
+  LUAJIT_MODE_MAX
+};
+
+/* Flags or'ed in to the mode. */
+#define LUAJIT_MODE_OFF   0x0000  /* Turn feature off. */
+#define LUAJIT_MODE_ON    0x0100  /* Turn feature on. */
+#define LUAJIT_MODE_FLUSH 0x0200  /* Flush JIT-compiled code. */
+
+/* LuaJIT public C API. */
+
+/* Control the JIT engine. */
+LUA_API int luaJIT_setmode(lua_State *L, int idx, int mode);
+
+/* Low-overhead profiling API. */
+typedef void (*luaJIT_profile_callback)(
+    void *data, lua_State *L, int samples, int vmstate);
+LUA_API void luaJIT_profile_start(
+    lua_State *L, const char *mode, luaJIT_profile_callback cb, void *data);
+LUA_API void luaJIT_profile_stop(lua_State *L);
+LUA_API const char *luaJIT_profile_dumpstack(
+    lua_State *L, const char *fmt, int depth, size_t *len);
+
+/* Enforce (dynamic) linker error for version mismatches. Call from main. */
+LUA_API void LUAJIT_VERSION_SYM(void);
 ```
