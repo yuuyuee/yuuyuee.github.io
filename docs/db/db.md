@@ -250,27 +250,48 @@ ALTER TABLE t RENAME TO t1;
 
 -- Privileges
 
--- SELECT
--- INSERT
--- UPDATE
--- DELETE
--- TRUNCATE
--- REFERENCES
--- TRIGGER
--- CREATE
--- CONNECT
--- TEMPORARY
--- EXECUTE
--- USAGE
--- SET
--- ALTER SYSTEM
--- ALL
+-- Privilege      | Abbreviation    | Applicable Object Type
+-- =============== ================= ========================
+-- SELECT         | r ('read')      | LARGE OBJECT, SEQUENCE, TABLE (and table-like objects), table column
+-- INSERT         | a ('append')    | TABLE, table column
+-- UPDATE         | w ('write')     | LARGE OBJECT, SEQUENCE, TABLE, table column
+-- DELETE         | d               | TABLE
+-- TRUNCATE       | D               | TABLE
+-- REFERENCES     | x               | TABLE, table column
+-- TRIGGER        | t               | TABLE
+-- CREATE         | C               | DATABASE, SCHEMA, TABLESPACE
+-- CONNECT        | c               | DATABASE
+-- TEMPORARY      | T               | DATABASE
+-- EXECUTE        | X               | FUNCTION, PROCEDURE
+-- USAGE          | U               | DOMAIN, FOREIGN DATA WRAPPER, FOREIGN SERVER, LANGUAGE, SCHEMA, SEQUENCE, TYPE
+-- SET            | s               | PARAMETER
+-- ALTER SYSTEM   | A               | PARAMETER
+-- ALL            |                 |
+
+
+-- Object Type                    | All Privileges  | Default PUBLIC Privileges | psql Command
+-- =============================== ================= =========================== ==============
+-- DATABASE                       | CTc             | Tc                        | \l
+-- DOMAIN                         | U               | U                         | \dD+
+-- FUNCTION or PROCEDURE          | X               | X                         | \df+
+-- FOREIGN DATA WRAPPER           | U               | none                      | \dew+
+-- FOREIGN SERVER                 | U               | none                      | \des+
+-- LANGUAGE                       | U               | U                         | \dL+
+-- LARGE OBJECT                   | rw              | none                      | \dl+
+-- PARAMETER                      | sA              | none                      | \dconfig+
+-- SCHEMA                         | UC              | none                      | \dn+
+-- SEQUENCE                       | rwU             | none                      | \dp
+-- TABLE (and table-like objects) | arwdDxt         | none                      | \dp
+-- Table column                   | arwx            | none                      | \dp
+-- TABLESPACE                     | C               | none                      | \db+
+-- TYPE                           | U               | U                         | \dT+
 
 -- Assigning new owner
 ALTER TABLE t OWNER TO new_owner;
 
 -- Granting privileges
 GRANT UPDATE ON t TO role_name; -- granting the privilege to UPDATE the table for role_name
+GRANT ALL ON t TO PUBLIC; -- granting the privilege to UPDATE the table for all role
 
 
 ```
