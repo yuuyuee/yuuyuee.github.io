@@ -248,6 +248,19 @@ ALTER TABLE t RENAME COLUMN c TO c1;
 -- Renaming table
 ALTER TABLE t RENAME TO t1;
 
+-- Inheritance
+
+CREATE TABLE person (
+  name text PRIMARY KEY,
+  age  int,
+  sex  text
+);
+
+CREATE TABLE stutent (
+  class text
+) INHERITS (persion);
+
+
 -- Privileges
 
 -- Privilege      | Abbreviation    | Applicable Object Type
@@ -294,4 +307,91 @@ GRANT UPDATE ON t TO role_name; -- granting the privilege to UPDATE the table fo
 GRANT ALL ON t TO PUBLIC; -- granting the privilege to UPDATE the table for all role
 
 
+-- Table partitioning
+-- Although all partitions must have the same columns as their partitioned
+-- parent, partitions may have their own indexes, constraints and default
+-- values, distinct from those of other partitions.
+
+-- Declarative Partitioning
+
+-- 1. Create partition table
+CREATE TABLE measurement (
+  city_id   int NOT NULL,
+  logdate   date NOT NULL,
+  peaktemp  int,
+  unitsales int
+) PARTITION BY RANGE (logdate);
+
+-- 2. Create partition
+CREATE TABLE measurement_y2006m02 PARTITION OF measurement
+  FOR VALUES FROM ('2006-02-01') TO ('2006-03-01');
+
+CREATE TABLE measurement_y2006m03 PARTITION OF measurement
+  FOR VALUES FROM ('2006-03-01') TO ('2006-04-01');
+
+CREATE TABLE measurement_y2006m04 PARTITION OF measurement
+  FOR VALUES FROM ('2006-04-01') TO ('2006-05-01')
+  TABLESPACE fasttablespace;
+
+CREATE TABLE measurement_y2006m05 PARTITION OF measurement
+  FOR VALUES FROM ('2006-05-01') TO ('2006-06-01')
+  WITH (parallel_workers = 4)
+  TABLESPACE fasttablespace;
+
+-- Sub-partition
+CREATE TABLE measurement_y2006m06 PARTITION OF measurement
+  FOR VALUES FROM ('2006-06-01') TO ('2006-07-01')
+  PARTITION BY RANGE (peaktemp);
+
+-- Inserting data into the parent table that does not map to one of
+-- the existing partitions will cause an error; an appropriate partition
+-- must be added manually.
+
+-- 3. Create index
+-- Not possible to use the CONCURRENTLY qualifier
+CREATE INDEX ON measurement (logdate);
+
+-- 4. Ensure that the enable_partition_pruning configuration parameter
+-- is not disabled in postgresql.conf. If it is, queries will not be
+-- optimized as desired.
+
+-- Partition Maintenance
+
+-- Remove partition
+-- require ACCESS EXCLUSIVE lock
+DROP TABLE measurement_y2006m02;
+-- or remove partition but retain access it as a table
+-- require ACCESS EXCLUSIVE lock on the partition table
+ALTER TABLE measurement DETACH PARTITION measurement_y2006m02;
+-- require SHARE UPDATE EXCLUSIVE lock on the partition table
+ALTER TABLE measurement DETACH PARTITION measurement_y2006m02 CONCURRENTLY;
+
+-- Create partition
+CREATE TABLE measurement_y2006m06 PARTITION OF measurement
+  FOR VALUES FROM ('2006-06-01') TO ('2006-07-01');
+-- As an alternative
+CREATE TABLE measurement_y2006m06
+  (LIKE measurement INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
+-- Add CHECK constriant to avoid the scan which is otherwise needed to
+-- validate the implicit partition constraint.
+ALTER TABLE measurement_y2006m06 ADD CONSTRAINT y2006m06
+  CHECK (logdate >= '2006-06-01' AND logdate < '2006-07-01');
+-- Some data preparation work
+-- require ACCESS EXCLUSIVE lock on the partition
+ALTER TABLE measurement ATTACH PARTITION measurement_y2006m06
+  FOR VALUES FROM ('2006-06-01') TO ('2006-07-01');
+-- Remove redundant CHECK constraint
+ALTER TABLE measurement_y2006m06 DROP CONSTRAINT y2006m06;
+
+-- To avoid long lock time
+CREATE INDEX measurement_unitsales_idx ON ONLY measurement (unitsales);
+CREATE INDEX measurement_y2006m06_unitsales_idx
+  ON measurement_y2006m06 (unitsales) CONCURRENTLY;
+ALTER INDEX measurement_unitsales_idx
+  ATTACH PARTITION measurement_y2006m06_unitsales_idx;
+-- This technique can be used with UNIQUE and PRIMARY KEY constraint too
+ALTER TABLE ONLY measurement ADD UNIQUE (logdate);
+ALTER TABLE measurement_y2006m06 ADD UNIQUE (logdate);
+ALTER INDEX measurement_logdate_idx
+  ATTACH PARTITION measurement_y2006m06_logdate_idx;
 ```
