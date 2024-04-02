@@ -88,6 +88,20 @@ CREATE TABLE t (
   hight_m  NUMERIC GENERATED ALWAYS AS (hight / 100) STORED
 );
 
+-- Copy table (structure & data, but no indexes, constraints and others).
+CREATE TABLE new_table AS TABLE existing_table;
+-- Copy table (structure only, but no indexes, constraints and others).
+CREATE TABLE new_table AS TABLE existing_table WITH NO DATA;
+-- Copy table (data only).
+INSERT INTO new_table SELECT * FROM existing_table;
+-- Copy table (structure, index, constraints, .e.g)
+-- ALL (COMMENTS, COMPRESSION, CONSTRAINTS, DEFAULTS, GENERATED
+--      IDENTITY, INDEXES, STATISTICS, STORAGE)
+CREATE TABLE new_table (LIKE existing_table INCLUDING ALL);
+-- Copy table (structure, index, constraints, .e.g, but no default values)
+CREATE TABLE new_table
+  (LIKE existing_table INCLUDING ALL EXCLUDING DEFAULTS);
+
 -- Constraints
 
 -- Check constraints
@@ -394,4 +408,112 @@ ALTER TABLE ONLY measurement ADD UNIQUE (logdate);
 ALTER TABLE measurement_y2006m06 ADD UNIQUE (logdate);
 ALTER INDEX measurement_logdate_idx
   ATTACH PARTITION measurement_y2006m06_logdate_idx;
+```
+
+## Data manipulation
+
+```sql
+-- Queries
+-- [WITH with_queries] SELECT select_list FROM table_expression [sort_specification]
+
+-- Joined table
+-- T1 { [INNER] | { LEFT | RIGHT | FULL } [OUTER] } JOIN T2 ON boolean_expression
+-- T1 { [INNER] | { LEFT | RIGHT | FULL } [OUTER] } JOIN T2 USING (join column list )
+-- T1 NATURAL { [INNER] | { LEFT | RIGHT | FULL } [OUTER] } JOIN T2
+-- The words INNER and OUTER are optional in all forms.
+-- INNER is the default; LEFT, RIGHT, and FULL imply an outer join.
+
+-- T1 CROSS JOIN T2 = T1 INNER JOIN T2 ON TRUE = FROM T1, T2
+-- T1 JOIN T2 USING (a, b) = T1 JOIN T2 ON T1.a = T2.a AND T1.b = T2.b
+
+--  ----- --- -----
+-- |     |   |     |
+-- |  A  | B |  C  |
+-- |     |   |     |
+--  ----- --- -----
+
+-- T1 = A + B; T2 = B + C
+
+-- T1 INNER JOIN T2; RESULT = B
+-- T1 INNER JOIN T2 ON TRUE;
+-- T1 CROSS JOIN T2;
+-- T1, T2; RESULT = T1 * T2
+
+-- T1 LEFT JOIN T2; RESULT = A + B
+-- T1 RIGHT JOIN T2; RESULT = B + C
+-- T1 FULL JOIN T2; RESULT = A + B + C
+
+-- Table and column aliase
+-- table_reference [AS] alias
+
+-- Sub-queries
+-- FROM (SELECT * FROM table1) AS alias_name
+-- FROM (VALUES ('anne', 'smith'), ('bob', 'jones')) AS names(first, last)
+
+-- Table function
+-- function_call [WITH ORDINALITY] [[AS] table_alias [(column_alias [, ... ])]]
+-- ROWS FROM( function_call [, ... ] ) [WITH ORDINALITY] [[AS] table_alias [(column_alias [, ... ])]]
+-- UNNEST( array_expression [, ... ] ) [WITH ORDINALITY] [[AS] table_alias [(column_alias [, ... ])]]
+
+CREATE TABLE t (
+  id int,
+  subid int,
+  name text;
+);
+
+CREATE FUNCTION gett(int) RETURNS SETOF foo AS $$
+  SELECT * FROM t WHERE id = $1;
+$$;
+
+SELECT * FROM gett(1) AS t1;
+
+SELECT * FROM t
+  WHERE subid IN (
+    SELECT subid FROM gett(t.id) AS t1 WHERE t.id = t1.id
+  );
+
+CREATE VIEW t_view AS SELECT * FROM gett(1);
+
+SELECT *
+  FROM dblink('dbname=mydb', 'SELECT proname, prosrc FROM pg_proc')
+    AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+
+SELECT *
+FROM ROWS FROM
+    (
+        json_to_recordset('[{"a":40,"b":"foo"},{"a":"100","b":"bar"}]')
+            AS (a INTEGER, b TEXT),
+        generate_series(1, 3)
+    ) AS x (p, q, s)
+ORDER BY p;
+
+--   p  |  q  | s
+-- -----+-----+---
+--   40 | foo | 1
+--  100 | bar | 2
+--      |     | 3
+
+-- GROUP BY & HAVING
+-- SELECT select_list
+--   FROM ...
+--   [WHERE ...]
+--   GROUP BY grouping_column_reference [, grouping_column_reference]...
+--   HAVING boolean_expression
+-- In general, if a table is grouped, columns that are not listed
+-- in GROUP BY cannot be referenced except in aggregate expressions.
+-- If a query contains aggregate function calls, but no GROUP BY clause,
+-- grouping still occurs: the result is a single group row (or perhaps no
+-- rows at all, if the single row is then eliminated by HAVING).
+-- The same is true if it contains a HAVING clause, even without any
+-- aggregate function calls or GROUP BY clause.
+
+-- PARTITION BY
+SELECT
+  product_id,
+  category,
+  date,
+  sales,
+  sum(sales) AS (PARTITION BY category) AS total_sales
+FROM products
+ORDER BY date;
 ```
