@@ -516,4 +516,208 @@ SELECT
   sum(sales) AS (PARTITION BY category) AS total_sales
 FROM products
 ORDER BY date;
+
+-- Combining queries (UNION & INTERSECT & EXCEPT)
+-- query1 UNION [ALL] query2
+-- query1 INTERSECT [ALL] query2
+-- query1 EXCEPT [ALL] query2
+-- In order to calculate the union, intersection, or difference of two
+-- queries, the two queries must be “union compatible”, which means that
+-- they return the same number of columns and the corresponding columns
+-- have compatible data types.
+-- If `ALL` is not used, queries has eliminates duplicate rows from its
+-- result, in the same way as DISTINCT.
+
+-- Sorting rows
+-- SELECT select_list
+-- FROM table_expression
+-- ORDER BY sort_expression1 [ASC | DESC] [NULLS { FIRST | LAST }]
+--   [, sort_expression2 [ASC | DESC] [NULLS { FIRST | LAST }] ...
+
+-- Limit & OFFSET
+SELECT select_list
+FROM table_expression
+  [ ORDER BY ... ]
+  [ LIMIT { number | ALL } ] [ OFFSET number ]
+-- LIMIT: No more than that many rows will be returned.
+-- OFFSET: skip many results before beginning to return rows.
+
+-- Values lists
+-- VALUES ( expression [, ...] ) [, ...]
+SELECT 1 AS c1, 'one' AS c2
+UNION ALL SELECT 2, 'two'
+UNION ALL SELECT 3, 'three';
+-- or
+SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (c1, c2);
+
+-- WITH queries (common table expressions)
+-- WITH regional_sales AS (
+--   SELECT region, SUM(amount) AS total_sales
+--   FROM orders
+--   GROUP BY region
+-- ), top_regions AS (
+--   SELECT region
+--   FROM regional_sales
+--   WHERE total_sales > (SELECT SUM(total_sales)/10 FROM regional_sales)
+-- )
+-- SELECT
+--   region,
+--   product,
+--   SUM(quantity) AS product_units,
+--   SUM(amount) AS product_sales
+-- FROM orders
+-- WHERE region IN (SELECT region FROM top_regions)
+-- GROUP BY region, product;
+
+-- Declaring enumerated types
+CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
+CREATE TABLE person (
+  name text,
+  current_mood mood
+);
+INSERT INTO person VALUES ('Moe', 'happy');
+SELECT * FROM person WHERE current_mood = 'happy';
+--  name | current_mood
+-- ------+--------------
+--  Moe  | happy
+
+-- JSON type
+-- @>: containment
+-- ? : existance
+
+-- Simple scalar/primitive value
+-- Primitive values can be numbers, quoted strings, true, false, or null
+SELECT '5'::json;
+
+-- Array of zero or more elements (elements need not be of same type)
+SELECT '[1, 2, "foo", null]'::json;
+
+-- Object containing pairs of keys and values
+-- Note that object keys must always be quoted strings
+SELECT '{"bar": "baz", "balance": 7.77, "active": false}'::json;
+
+-- Arrays and objects can be nested arbitrarily
+SELECT '{"foo": [true, "bar"], "tags": {"a": 1, "b": null}}'::json;
+
+-- This array contains the primitive string value:
+SELECT '["foo", "bar"]'::jsonb @> '"bar"'::jsonb;
+
+-- This exception is not reciprocal -- non-containment is reported here:
+SELECT '"bar"'::jsonb @> '["bar"]'::jsonb;  -- yields false
+
+-- String exists as array element:
+SELECT '["foo", "bar", "baz"]'::jsonb ? 'bar';
+
+-- String exists as object key:
+SELECT '{"foo": "bar"}'::jsonb ? 'foo';
+
+-- Object values are not considered:
+SELECT '{"foo": "bar"}'::jsonb ? 'bar';  -- yields false
+
+-- As with containment, existence must match at the top level:
+SELECT '{"foo": {"bar": "baz"}}'::jsonb ? 'bar'; -- yields false
+
+-- A string is considered to exist if it matches a primitive JSON string:
+SELECT '"foo"'::jsonb ? 'foo';
+
+-- jsonb index
+CREATE INDEX idxgin ON api USING GIN (jdoc);
+CREATE INDEX idxginp ON api USING GIN (jdoc jsonb_path_ops);
+-- {
+--   "guid": "9c36adc1-7fb5-4d5b-83b4-90356a46061a",
+--   "name": "Angela Barton",
+--   "is_active": true,
+--   "company": "Magnafone",
+--   "address": "178 Howard Place, Gulf, Washington, 702",
+--   "registered": "2009-11-07T08:53:22 +08:00",
+--   "latitude": 19.793713,
+--   "longitude": 86.513373,
+--   "tags": [
+--     "enim",
+--     "aliquip",
+--     "qui"
+--   ]
+-- }
+
+-- Find documents in which the key "company" has value "Magnafone"
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @> '{"company": "Magnafone"}';
+-- Find documents in which the key "tags" contains key or array element "qui"
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc -> 'tags' ? 'qui';
+
+CREATE INDEX idxgintags ON api USING GIN ((jdoc -> 'tags'));
+-- Find documents in which the key "tags" contains array element "qui"
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @> '{"tags": ["qui"]}';
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @? '$.tags[*] ? (@ == "qui")';
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
+
+-- jsonb subscripting
+
+-- Extract object value by key
+SELECT ('{"a": 1}'::jsonb)['a'];
+
+-- Extract nested object value by key path
+SELECT ('{"a": {"b": {"c": 1}}}'::jsonb)['a']['b']['c'];
+
+-- Extract array element by index
+SELECT ('[1, "2", null]'::jsonb)[1];
+
+-- Update object value by key. Note the quotes around '1': the assigned
+-- value must be of the jsonb type as well
+UPDATE table_name SET jsonb_field['key'] = '1';
+
+-- This will raise an error if any record's jsonb_field['a']['b'] is something
+-- other than an object. For example, the value {"a": 1} has a numeric value
+-- of the key 'a'.
+UPDATE table_name SET jsonb_field['a']['b']['c'] = '1';
+
+-- Filter records using a WHERE clause with subscripting. Since the result of
+-- subscripting is jsonb, the value we compare it against must also be jsonb.
+-- The double quotes make "value" also a valid jsonb string.
+SELECT * FROM table_name WHERE jsonb_field['key'] = '"value"';
+
+-- Where jsonb_field was NULL, it is now {"a": 1}
+UPDATE table_name SET jsonb_field['a'] = '1';
+
+-- Where jsonb_field was NULL, it is now [1]
+UPDATE table_name SET jsonb_field[0] = '1';
+
+-- Where jsonb_field was [], it is now [null, null, 2];
+-- where jsonb_field was [0], it is now [0, null, 2]
+UPDATE table_name SET jsonb_field[2] = '2';
+
+-- Where jsonb_field was {}, it is now {"a": [{"b": 1}]}
+UPDATE table_name SET jsonb_field['a'][0]['b'] = '1';
+
+-- Where jsonb_field was [], it is now [null, {"a": 1}]
+UPDATE table_name SET jsonb_field[1]['a'] = '1';
+
+-- Declaring arrary types
+CREATE TABLE t (
+  c1 integer[],
+  c2 text[][],
+  c3 integer[3][3]
+  -- ignores any supplied array size limits,
+  -- the behavior is the same as for arrays of unspecified length.
+);
+--  SQL standard
+CREATE TABLE t (
+  c1 integer ARRAY[],
+  c2 text ARRAY[][],
+  c3 integer ARRAY[3][3]
+);
+
+-- '{{1,2,3}, {4,5,6}, {7,8,9}}'
+INSERT INTO t
+  VALUES ('{1, 2}', '{{1, 2}, {1, 2}}', '{{1, 2}, {1, 2}, {1, 2}}');
+SELECT * FROM t WHERE c1[0] == 1;
+SELECT c2[0] FROM t;
+SELECT c3[1:2][2] FROM t;
+SELECT c3[:2][2:] FROM t;
+-- array_dims
+-- array_upper
+-- array_length
+-- cardinality
+UPDATE t SET c1 = '{1,2,3}';
+UPDATE t SET c1 = ARRAY[1,2,3];
+UPDATE t SET c1[0] = 100;
 ```
