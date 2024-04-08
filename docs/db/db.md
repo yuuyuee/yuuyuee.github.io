@@ -713,18 +713,67 @@ UPDATE t SET c1[0] = 100;
 
 - dirty read
   A transaction reads data written by a concurrent uncommitted transaction.
+
 - nonrepeatable read
   A transaction re-reads data it has previously read and finds that data has been modified by another transaction (that committed since the initial read).
+
 - phantom read
   A transaction re-executes a query returning a set of rows that satisfy a search condition and finds that the set of rows satisfying the condition has changed due to another recently-committed transaction.
+
 - serialization anomaly
   The result of successfully committing a group of transactions is inconsistent with all possible orderings of running those transactions one at a time.
 
 ### Transaction isolation levels
 
 | Isolation Level       | Dirty Read              | Nonrepeatable Read  | Phantom Read            | Serialization Anomaly |
-| ----------------------|-------------------------|---------------------|-------------------------|-----------------------|
+| --------------------- | ------------------------|---------------------|-------------------------|---------------------- |
 | **Read uncommitted**  | Allowed, but not in PG  | Possible            | Possible                | Possible              |
 | **Read committed**    | Not possible            | Possible            | Possible                | Possible              |
 | **Repeatable read**   | Not possible            | Not possible        | Allowed, but not in PG  | Possible              |
 | **Serializable**      | Not possible            | Not possible        | Not possible            | Not possible          |
+
+- Read committed
+  在PostgreSQL中Read committed是默认隔离级别。
+  Read committed事务隔离级别以新的快照启动每个命令，快照包括截止到该命令前的所有事务提交的内容。
+  对于SELECT查询，无法看到其他未提交的数据和在**查询执行期间**其他并发事务提交的数据，因此单个事务内连续查询可能看到不同的数据（第一个查询开始后且第二个查询开始前其他事务提交了数据）。
+  对于UPDATE, DELETE, SELECT FOR UPDATE, SELECT FOR SHARE在查询方面类似于SELECT，但是当查询行正在被其他并发事务更新（删除或锁住）时，会等待前者提交或回滚，如果数据被更新，后者将应用这些更新内容。
+
+  ```sql
+  BEGIN;
+  UPDATE t SET c = c + 1;
+  -- run from another session:  DELETE FROM t WHERE c = 10;
+  -- DELETE will wait for first updating transaction to commit or roll back.
+  COMMIT;
+  ```
+
+- Repeatable read
+  Repeatable read仅能看到事务开始前提交的数据，无法看到其他未提交的数据和在**事务执行期间**其他并发事务提交的数据。
+  对于SELECT查询，与Read committed事务隔离级别不同在于快照创建于事务的第一个非事务控制语句（BEGIN, COMMIT）而不是当前语句，因此单个事务内的连续查询看到的是相同的数据，看不到事务开始后其他事务提交的数据。
+  对于UPDATE, DELETE, SELECT FOR UPDATE, SELECT FOR SHARE在查询方面类似于SELECT，但是当查询行正在被其他并发事务更新（删除或锁住）时，会等待前者提交或回滚，如果数据被更新，后者将回滚事务并发出错误信息*ERROR:  could not serialize access due to concurrent update*，因为在Repeatable read事务开始后，不能修改或锁住被其他事务修改的行，因此应用程序在使用这个事务隔离级别是必须重试执行事务。
+
+- Serializable
+  Serializable对所有提交的事务逐个执行，串行的而非并发的。然而，就像Repeatable read，应用程序需要准备重试执行由于序列化失败的事务。实际上，这个隔离级别与Repeatable read完全相同，不同之处在于它还监视可能使可串行化事务的并发集的执行行为与这些事务的所有可能的串行（一次一个）执行不一致的条件。除了可重复读取之外，这种监视不会引入任何阻塞，但监视会有一些开销，并且检测到可能导致序列化异常的条件会触发序列化失败。
+
+  ```sql
+  -- Table t
+  -- class | value
+  -- -------+-------
+  --     1 |    10
+  --     1 |    20
+  --     2 |   100
+  --     2 |   200
+
+  -- Transaction A
+  BEGIN;
+  SELECT SUM(value) FROM t where class = 1;
+  INSERT INTO t VALUE (2, 30);
+  COMMIT;
+
+  -- Transaction B Concurrently
+  BEGIN;
+  SELECT SUM(value) FROM t where class = 2;
+  INSERT INTO t VALUE (1, 300);
+  COMMIT;
+  ```
+
+  上述2个并发事务在Repeatable read事务隔离级别下都可以成功提交事务，但是由于没有结果一致的连续（逐个）执行顺序（即事务执行顺序AB与BA结果不一致），在Serializable事务隔离级别下只有一个可以成功提交事务，另一个则失败并且发出错误信息*ERROR:  could not serialize access due to read/write dependencies among transactions*。
