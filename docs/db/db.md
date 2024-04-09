@@ -1,4 +1,4 @@
-# ANSI/ISO SQL
+# PostgreSQL
 
 ## Transaction
 
@@ -777,3 +777,104 @@ UPDATE t SET c1[0] = 100;
   ```
 
   上述2个并发事务在Repeatable read事务隔离级别下都可以成功提交事务，但是由于没有结果一致的连续（逐个）执行顺序（即事务执行顺序AB与BA结果不一致），在Serializable事务隔离级别下只有一个可以成功提交事务，另一个则失败并且发出错误信息*ERROR:  could not serialize access due to read/write dependencies among transactions*。
+
+## Setup & Operation
+
+### Environments
+
+- PGDATA - Default data directory location (The use of this environment variable is deprecated)
+- PGDATABASE - Default database
+- PGUSER - Default user name
+- PGPASSWORD - Default user password
+- PGHOST - Default host name
+- PGHOSTADDR - Same as PGHOST but not DNS lookup overhead
+- PGPORT - Default port number (preferably set in the configuration file)
+
+### Create database cluster
+
+```bash
+mkdir /usr/local/pgsql
+chown postgres /usr/local/pgsql
+su postgres
+
+initdb -D /usr/local/pgsql # pg_ctl -D /usr/local/pgsql initdb
+                           # or
+                           # PGDATA=/usr/local/pgsql initdb
+```
+
+### Start the database server
+
+```bash
+postgres -D /usr/local/pgsql >logfile 2>&1
+# or
+pg_ctl -D /usr/local/pgsql -l logfile start
+```
+
+## Role
+
+```sql
+-- CREATE ROLE <name> [privilege]
+-- privilege:
+-- LOGIN - login privilege
+-- SUPERUSER - superuser status that can passby all permission checks
+-- CREATEDB - database creation
+-- CREATEROLE - role creation
+-- REPLICATION LOGIN - initiating replication
+-- PASSWORD 'string' - password
+-- WITH INHERIT <TRUE|FALSE> - inheritance of privileges
+-- CONNECTION LIMIT 'integer' - connection limit
+CREATE ROLE name;
+DROP ROLE name;
+SELECT rolname FROM pg_roles WHERE rolcanlogin; -- \du for psql program
+```
+
+or
+
+```bash
+createuser name
+dropuser name
+```
+
+## Database
+
+```sql
+CREATE DATABASE dbname OWNER rolename;
+DROP DATABASE dbname;
+ALTER DATABASE dbname SET {option} TO {value};
+```
+
+or
+
+```bash
+createdb -O rolename dbname
+```
+
+### Table space
+
+```sql
+CREATE TABLESPACE tablespacename LOCATION '/path';
+CREATE TABLE foo(i integer) TABLESPACE tablespacename;
+```
+
+## Backup and Restore
+
+```bash
+# pg_dump dumps only a single database at a time, and it does not dump information
+# about roles or tablespaces (because those are cluster-wide rather than per-database)
+
+# backup
+pg_dump dbname > dumpfile
+
+# restore
+psql dbname < dumpfile
+
+# backup dbname in the host1 to the host2
+pg_dump -h host1 dbname | psql -h host2 dbname
+```
+
+or
+
+```bash
+pg_dumpall > dumpfile
+psql -f dumpfile postgres
+```
