@@ -60,7 +60,7 @@ numChildren：znode子节点数量
 
 ## zk会话
 
-![](zk\state_dia.jpg)
+![](images/state_dia.jpg)
 
 ## 如何处理CONNECTION_LOSS错误
 
@@ -156,7 +156,7 @@ zk集群主要目的时获得可靠的zk服务，只要多数服务器可用，�
    clientPort=2181
    intLimit=5
    syncLimit=2
-   
+
    # format: server.<myid>=<address>:<quorum-port>:<election-port>
    server.1=zoo1:2888:3888
    server.2=zoo2:2888:3888

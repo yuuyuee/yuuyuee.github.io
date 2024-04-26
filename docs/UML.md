@@ -16,6 +16,26 @@
 活动图表示在处理某个活动时，多个类之间的过程控制流。
 活动图适合在业务单元的级别上对更高的业务过程进行建模，用于显示业务如何运作。
 
+## 类图
+
+![Class Notation](images/Class-Notation.webp)
+
+可见性表示
+\+ 公共成员
+\- 私有成员
+\# 保护成员
+~ 默认可见性或包级别可见性
+
+![Class notaion with parameter directionality](images/class-notation-with-parameter-directionality.jpg)
+
+In (Input) 输入参数
+Out (Output) 输出参数
+InOut (Inpout/Output) 输入输出参数
+
+![Class diagram relationships](images/relationship.webp)
+
+![Class diagram relationships 2](images/class-diagram.webp)
+
 ## 总结
 
 | UML    | REMARK                           |                  |
