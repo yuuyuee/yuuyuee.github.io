@@ -388,6 +388,7 @@ class Stream {
 
 class FileStream: public Stream {
  public:
+  FileStream(const char* filename);
   virtual ~FileStream() {}
 
   virtual void Write(void* data);
@@ -457,6 +458,7 @@ class Stream {
 
 class FileStream: public Stream {
  public:
+  FileStream(const char* filename);
   virtual ~FileStream() {}
 
   virtual void Write(void* data);
