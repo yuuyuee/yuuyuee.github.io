@@ -496,9 +496,69 @@ Behavioral design patterns are concerned with algorithms and the assignment of r
 
 ### Chains of Responsibility
 
-### Command
+```cpp
+// 允许你将请求沿着处理者链进行发送。 收到请求后， 每个处理者均可对请求进行处理， 或将其传递给链上的下个处理者
+
+class Handler {
+ public:
+  virtual ~Handler() {}
+
+  virtual Handler* SetNext(Handler* handler) = 0;
+  virtual void Handle(void* request) = 0;
+};
+
+class BaseHandler {
+ public:
+  BaseHandler(): next_handler_(nullptr) {}
+  virtual ~BaseHandler() {}
+
+  virtual Handler* SetNext(Handler* handler) {
+    next_handler_ = handler;
+    return handler;
+  }
+
+  virtual void Handle(void* request) {
+    if (next_handler_)
+      next_handler_->Handle(request);
+  }
+
+ private:
+  Handler* next_handler_;
+};
+
+class ConcreteHandlerA: BaseHandler {
+ public:
+  virtual ~ConcreteHandlerA() {}
+
+  virtual void Handle(void* request) {
+    if (CanHandle(request)) {
+
+    } else {
+      BaseHandler::Handle(request);
+    }
+  }
+};
+
+class ConcreteHandlerB: BaseHandler {};
+class ConcreteHandlerC: BaseHandler {};
+
+int main() {
+  ConcreteHandlerA h1;
+  ConcreteHandlerB h2;
+  ConcreteHandlerC h3;
+  h1.SetNext(&h2)->SetNext(&h3);
+  void* request;
+  h1.Handle(request);
+  return 0;
+}
+```
+
+### Command (Action Transaction)
 
 ```cpp
+// 将请求转换为一个包含与请求相关的所有信息的独立对象
+// 该转换让你能根据不同的请求将方法参数化、延迟请求执行或将其放入队列中，且能实现可撤销操作
+// 命令在发送者和请求者之间建立单向连接
 class Receiver {
  public:
   void Operation(int a, int b, int c) {
@@ -563,9 +623,10 @@ int main() {
 
 ### Iterator
 
-### Mediator
+### Mediator (Intermediary Controller)
 
 ```cpp
+// 能让你减少对象之间混乱无序的依赖关系。 该模式会限制对象之间的直接交互， 迫使它们通过一个中介者对象进行合作
 class Mediator;
 
 class Component {
