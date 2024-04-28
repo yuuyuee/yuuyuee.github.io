@@ -10,26 +10,29 @@
 ## Data type
 
 ```sql
--- Data Type                    MYSQL
--- BIT(n)                       BIT(n)
--- BIT VARYING(n)               -
--- DECIMAL(p, s)                DECIMAL(p, s); DEC(p, s)
--- INTEGER                      INTEGER; TINYINT; BOOLEAN; BOOL
--- SMALLINT                     SMALLINT
--- BIGINT                       BIGINT
--- FLOAT(p, s)                  FLOAT(p, s); DOUBLE(p, s)
--- DOUBLE PRECISION(p, s)       DOUBLE PRECISION(p, s)
--- REAL(s)                      REAL(s)
+-- Data Type                    MYSQL                                     PostgreSQL
+-- BIT(n)                       BIT(n)                                    BIT; BIT(n)
+-- BIT VARYING(n)               -                                         BIT VARYING [(n)] | VARBIT(n)
+-- DECIMAL(p, s)                DECIMAL(p, s); DEC(p, s)                  NUMERIC(p, s) | DECIMAL(p, s)
+-- BOOLEAN                      BOOLEAN; BOOL                             BOOLEAN; BOOL
+-- INTEGER                      INTEGER; TINYINT                          INTEGER | INT; INT4
+-- SMALLINT                     SMALLINT                                  SAMLLINT | INT2
+-- BIGINT                       BIGINT                                    BITINT | INT8
+-- FLOAT(p, s)                  FLOAT(p, s); DOUBLE(p, s)                 REAL | FLOAT4
+-- DOUBLE PRECISION(p, s)       DOUBLE PRECISION(p, s)                    DOUBLE PERCISION | FLOAT8
+-- REAL(s)                      REAL(s)                                   REAL | FLOAT4
 
--- CHARACTER(n)                 CHAR(n); BINARY(n)
--- CHARACTER VARYING(n)         VARCHAR(n); VARBINARY(n)
--- BLOB                         TINYBLOB; BLOB; MEDIUMBLOB; LONGBLOB
--- TEXT                         TINYTEXT; TEXT; MEDIUMTEXT; LONGTEXT
+-- CHARACTER(n)                 CHAR(n);                                  CHARACTER[(n)] | CHAR(n)
+-- CHARACTER VARYING(n)         VARCHAR(n); VARBINARY(n)                  CHARACTER VARYING[(n)] | VCHAR (n)
+-- BINARY(n)                    BINARY(n)                                 BYTEA
+-- VARBINARY(n)                 VARBINARY(n)                              BYTEA
+-- BLOB                         TINYBLOB; BLOB; MEDIUMBLOB; LONGBLOB      BYTEA
+-- TEXT                         TINYTEXT; TEXT; MEDIUMTEXT; LONGTEXT      TEXT
 
--- DATE                         DATE
--- TIME                         TIME
--- DATETIME                     DATETIME
--- TIMESTAMP                    TIMESTAMP
+-- DATE                         DATE                                      DATE
+-- TIME                         TIME                                      TIME [(p)] [WITHOUT TIME ZONE]
+-- DATETIME                     DATETIME                                  -
+-- TIMESTAMP                    TIMESTAMP                                 TIMESTAMP [(p)] [WITHOUT TIME ZONE]
 ```
 
 ## View

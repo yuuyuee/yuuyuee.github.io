@@ -4,12 +4,14 @@
 
 ## Creational Patterns
 
-Creational design patterns provide various object creation mechanisms, which increase flexibility and reuse of existing code.
+Creational design patterns provide various object creation mechanisms,
+which increase flexibility and reuse of existing code.
 
 ### Factory Method
 
 ```cpp
-// 分离类的构造与使用
+// Provides an interface for creating objects in a superclass and allows
+// subclass to alter the type of objects that will be created.
 class Product {
  public:
   virtual ~Product() {}
@@ -83,7 +85,8 @@ int main() {
 ### Builder
 
 ```cpp
-// 分离类的复杂构造过程
+// Construct complex objects step by step, allows to produce different type
+// and representation of an objects using the same construction code.
 class Builder {
  public:
   virtual ~Builder() {}
@@ -136,7 +139,7 @@ int main() {
 ### Prototype (Clone)
 
 ```cpp
-// 复制已有的对象来创建对象，生成构造代价大的类的场景
+// Copy existing objects without making code dependent on their classes.
 class Prototype {
  public:
   virtual ~Prototype() {}
@@ -191,16 +194,25 @@ std::once_flag Singleton<Tp>::flag;
 template <typename Tp>
 Tp* Singleton<Tp>::ptr = nullptr;
 
+int main() {
+  struct Object {
+    void Func() const {}
+  };
+  Singleton<Object>::Instance()->Func();
+  return 0;
+}
+
 ```
 
 ## Structual Patterns
 
-Structural design patterns explain how to assemble objects and classes into larger structures, while keeping these structures flexible and efficient.
+Structural design patterns explain how to assemble objects and classes into
+larger structures, while keeping these structures flexible and efficient.
 
 ### Adapter (Wrapper)
 
 ```cpp
-// 让不兼容的接口能够互相合作
+// Allows objects with incompatible interfaces to collaborate.
 
 class Interface {
  public:
@@ -232,8 +244,11 @@ class Adapter: public Interface {
 ### Bridge
 
 ```cpp
-// 可将一个大类或一系列紧密相关的类拆分为抽象和实现两个独立的层次结构， 从而能在开发时分别使用
+// Split a large class or a set of closely related classes into two separate
+// hierarchies, "Abstraction" and "Implamentation" which can be developed
+// independently of each other.
 
+// Implamentation layer
 class Device {
  public:
   virtual ~Device() {}
@@ -260,6 +275,7 @@ class TV: public Device {
   virtual void SetChannel(int channel);
 };
 
+// Abstraction layer
 class Remote {
  public:
   Remote(Device* device): device_(device) {}
@@ -320,7 +336,8 @@ int main() {
 ### Composite (Object tree)
 
 ```cpp
-// 可以使用它将对象组合成树状结构， 并且能像使用独立对象一样使用它们
+// Compose objects into tree structures and then work with these structures
+// as if they were indivitual objects.
 
 class Graph {
  public:
@@ -376,7 +393,8 @@ int main() {
 ### Decorator (Wrapper)
 
 ```cpp
-// 允许你通过将对象放入包含行为的特殊封装对象中来为原对象绑定新的行为
+// Attach new behaviors to objects by placing there objects inside special
+// wrapper objects that contains the behaviors.
 
 class Stream {
  public:
@@ -431,23 +449,24 @@ class EncryptionStream: public StreamDecorator {
 ### Facade
 
 ```cpp
-// 为程序库、 框架或其他复杂类提供一个简单的接口
+// Provides a simplified interface to a library, a framework, or any other
+// complex set of classes.
 
 ```
 
 ### Flyweight  (Cache)
 
 ```cpp
-// 摒弃了在每个对象中保存所有数据的方式， 通过共享多个对象所共有的相同状态， 让你能在有限的内存容量中载入更多对象
+// Sharing common parts of states between multiple objects instead of keeping
+// all of the data in each object.
 
 ```
 
 ### Proxoy
 
 ```cpp
-// 能够提供对象的替代品或其占位符。 代理控制着对于原对象的访问， 并允许在将请求提交给对象前后进行一些处理
-// 代理类拥有被代理类的控制权已经生命周期管理
-
+// Proxy controls access to the original object, allow to perform something
+// either before or after the request get though the original object.
 class Stream {
  public:
   virtual ~Stream() {}
@@ -465,7 +484,7 @@ class FileStream: public Stream {
   virtual void* Read();
 };
 
-// proxy class
+// Proxy class
 class EncryptionStream: public Stream {
  public:
   EncryptionStream(stream* stream): stream_(stream) {}
@@ -492,12 +511,17 @@ class EncryptionStream: public Stream {
 
 ## Behavioral Patterns
 
-Behavioral design patterns are concerned with algorithms and the assignment of responsibilities between objects.
+Behavioral design patterns are concerned with algorithms and the assignment of
+responsibilities between objects.
 
 ### Chains of Responsibility
 
 ```cpp
-// 允许你将请求沿着处理者链进行发送。 收到请求后， 每个处理者均可对请求进行处理， 或将其传递给链上的下个处理者
+// Pass request along a chain of handlers, upon receiving a request, each handler
+// decides either to process the request or to pass it to the next handler in the
+// chain.
+// Chain of Responsibility passes a request sequentially along a dynamic chain of
+// potential receivers until one of them handles it.
 
 class Handler {
  public:
@@ -556,14 +580,19 @@ int main() {
 ### Command (Action Transaction)
 
 ```cpp
-// 将请求转换为一个包含与请求相关的所有信息的独立对象
-// 该转换让你能根据不同的请求将方法参数化、延迟请求执行或将其放入队列中，且能实现可撤销操作
-// 命令在发送者和请求者之间建立单向连接
+// Turns a request into a stand-alone object that contains all information
+// about the request.
+// This transformation that can pass reqeust as method arguments, delay or
+// queue request's execution and support undoable operations.
+// Command pattern establishes unidirectional connections between senders and receivers.
+// **Parameterize Objec**
+
 class Receiver {
  public:
   void Operation(int a, int b, int c) {
     // The Receiver classes contain some important business logic.
-    // They know how to perform all kinds of operations, associated with carrying out a request.
+    // They know how to perform all kinds of operations, associated with
+    // carrying out a request.
   }
 };
 
@@ -603,7 +632,7 @@ class Invoker {
     command_ = command;
   }
 
-  void ExecuteCommand() {
+  void Execute() {
     if (command_)
       command_->Execute();
   }
@@ -616,17 +645,24 @@ int main() {
   Receiver receiver;
   Invoker invoker;
   invoker.SetCommand(new ConcreteCommand(&receiver, 1, 2, 3));
-  invoker.ExecuteCommand();
+  invoker.Execute();
   return 0;
 }
 ```
 
 ### Iterator
 
+```cpp
+// Traverse elements of a collection without exposing its underlying representation.
+```
+
 ### Mediator (Intermediary Controller)
 
 ```cpp
-// 能让你减少对象之间混乱无序的依赖关系。 该模式会限制对象之间的直接交互， 迫使它们通过一个中介者对象进行合作
+// Restricts direct communication between the object and forces them to
+// collaborate only via mediator object for reduce chaotic dependencies
+// between the object.
+
 class Mediator;
 
 class Component {
@@ -700,6 +736,35 @@ int main() {
 ### Memento
 
 ```cpp
+// Save and restore previous state of an object without revealing the detail
+// of its implemention.
+
+class Originator;
+
+class Memento {
+ public:
+  virtual ~Memento() {}
+
+  virtual void Restore() = 0;
+};
+
+class Originator {
+ public:
+  Originator(): state_(0) {}
+
+  Memento Save() const { return Memento(state_); }
+  void Restore(Memento m) { state_ = m.GetState(); }
+
+ private:
+  int state_;
+};
+
+class CareTaker {
+ public:
+
+ private:
+  std::vector<Memento> history_;
+};
 
 ```
 
