@@ -739,6 +739,52 @@ int main() {
 // Save and restore previous state of an object without revealing the detail
 // of its implemention.
 
+// Implementation based on nested classes
+class Originator {
+ public:
+  class Memento {
+   public:
+    Memento(int state): state_(state) {}
+
+    void Restore(Originator* originator) {
+      originator->state_ = state_;
+    }
+
+   private:
+    int state_;
+  };
+
+  Memento Save() const { return Memento(state_); }
+
+ private:
+  int state_;
+};
+
+class CareTaker {
+ public:
+  CareTaker(Originator* originator)
+      : originator_(originator), history_() {}
+
+  void DoSomething() {
+    Originator::Memento* memento = originator->Save();
+    history_->push(memento);
+    // To do something
+  }
+
+  void Undo() {
+    Memento* memento = history_.pop();
+    memento->Restore();
+    delete memento;
+  }
+
+ private:
+  Originator* originator_;
+  std::stack<Orignator::Memento> history_;
+};
+
+
+// Implementation with even stricter encapsulation
+
 class Originator;
 
 class Memento {
@@ -748,22 +794,58 @@ class Memento {
   virtual void Restore() = 0;
 };
 
-class Originator {
+class ConcreteMemento: public Memento {
  public:
-  Originator(): state_(0) {}
+  ConcreteMemento(ConcreteOriginator* originator, int state)
+      : originator_(originator), state_(state) {}
+  virtual ~ConcreteMemento() {}
 
-  Memento Save() const { return Memento(state_); }
-  void Restore(Memento m) { state_ = m.GetState(); }
+  virtual void Restore() {
+    originator_->SetState(state_);
+  }
 
  private:
+  ConcreteOriginator* originator_;
   int state_;
+};
+
+class Originator {
+ public:
+  virtual ~Originator() {}
+
+  virtual Memento* Save() const = 0;
+  virtual void SetState(int state);
+};
+
+class ConcreteOriginator: Originator {
+ public:
+  ConcreteOriginator(): state_(0) {}
+  virtual ~ConcreteOriginator() {}
+
+  virtual Memento* Save() const {
+    return new ConcreteMemento(this, state_);
+  }
+
+  virtual void SetState(int state) {
+    state_ = state;
+  }
 };
 
 class CareTaker {
  public:
+  void DoSomething(Originator* originator) {
+    Memento* memento = originator->Save();
+    history_->push(memento);
+    // To do something
+  }
 
+  void Undo() {
+    Memento* memento = history_.pop();
+    memento->Restore();
+    delete memento;
+  }
  private:
-  std::vector<Memento> history_;
+  std::stack<Memento*> history_;
 };
 
 ```
@@ -771,30 +853,62 @@ class CareTaker {
 ### Observer
 
 ```cpp
+// Define a subscription mechanism to notify multiple object about any events
+// that happen to the object they're observing.
 
 ```
 
 ### State
 
 ```cpp
+// Lets an object alter its behavior when its internal state changes. It appears
+// as if the object changed its class.
 
 ```
 
 ### Strategy
 
 ```cpp
+// Define a family of algorithm, push each of them to a separate class, and make
+// their interchangable.
 
 ```
 
 ### Template Method
 
 ```cpp
+// Defines the skeleton of an algorithm in the superclass but lets subclasses
+// override specific steps of the algorithm without changing its structure.
 
+class AbstructClass {
+ public:
+  virtual ~AbstructClass() {}
+
+  void TemplateMethod() {
+    Step1();
+    if (Step2()) Step3()
+    else Step4();
+  }
+
+  virtual void Step1() { /* default implemention */ }
+  virtual bool Step2() { /* default implemention */ }
+  virtual void Step3() { /* default implemention */ }
+  virtual void Step4() { /* default implemention */ }
+};
+
+class ConcreteClass: public AbstructClass {
+ public:
+  virtual ~ConcreteClass() {}
+
+  virtual bool Step2() { /* Unique implemention */ }
+};
 ```
 
 ### Visitor
 
 ```cpp
+// Separate algorithms from the objects on which they operate.
+
 class ConcreteElementA;
 class ConcreteElementB;
 
