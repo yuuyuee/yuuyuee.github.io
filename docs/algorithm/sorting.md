@@ -1,5 +1,25 @@
 # Sorting
 
+## Comparison Based
+
+### Bubble Sort
+
+### Insertion Sort
+
+### Selection Sort
+
+### Quick Sort
+
+### Merge Sort
+
+### Heap Sort
+
+## Non-Comparison Based
+
+### Counting Sort
+
+### Radix Sort
+
 Algorithm                   |
 ----------------------------|
 Selection Sort              |
