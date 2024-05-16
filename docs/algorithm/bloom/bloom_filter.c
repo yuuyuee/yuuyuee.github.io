@@ -170,5 +170,5 @@ int bloom_filter_lookup_and_insert(struct bloom_filter* object, const void* buff
 }
 
 void bloom_filter_visit(struct bloom_filter* object, Visitor visitor) {
-  visitor(object->bytes, object->n, object->k, object->p);
+  visitor(object->bytes, object->n, object->k, object->p, object->k);
 }

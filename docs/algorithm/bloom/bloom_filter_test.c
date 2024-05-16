@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-void bloom_filter_visitor(uint64_t bytes, uint64_t entries, uint64_t hashs, double p) {
-  printf("bytes = %lu entries = %lu hashs = %lu p = %f%%\n", bytes, entries, hashs, p);
+void bloom_filter_visitor(uint64_t bytes, uint64_t entries, uint64_t hashs, double p, uint64_t k) {
+  printf("bytes = %lu entries = %lu hashs = %lu p = %f%% k = %lu\n", bytes, entries, hashs, p, k);
 }
 
 int main(int argc, char* argv[]) {
