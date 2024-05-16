@@ -43,7 +43,7 @@ int bloom_filter_lookup_and_insert(struct bloom_filter* object, const void* buff
 
 
 typedef void (*Visitor)(
-   uint64_t /* bytes */, uint64_t /* entries */, uint64_t /* hashs */, double /* Pfp */, uint64_t /* k */);
+   uint64_t /* bytes */, uint64_t /* entries */, uint64_t /* k */, double /* Pfp */);
 void bloom_filter_visit(struct bloom_filter* object, Visitor visitor);
 
 #ifdef __cplusplus
