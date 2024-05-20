@@ -12,6 +12,14 @@ $$k=ln2*bpe=ln2*m/n=ln2*-lnp/(ln2)^2$$
 
 ## Overview
 
+$e$ - target false positive rate
+$f$ - fingerprint length in bits
+$a$ - load factor (0 <= a <= 1)
+$b$ - number of entries per bucket
+$m$ - number of bucket
+$n$ - number of items
+$C$ - average bits per item
+
 A cuckoo filter is a compact variant of a cuckoo hash table that stores only fingerprints. A set membership query for item $x$ simply searches the hash table for the fingerprint of $x$, and returns true if an identical fingerprint is found.
 
 When constructing a cuckoo filter, its fingerprint size is determined by the target false positive rate $e$. Smaller values of $e$ require longer fingerprints to reject more false queries.
@@ -30,27 +38,54 @@ The lookup procedure checks both buckets to see if either contains this item.
 
 Inserting a new item x in to a hash table, If either of x’s two buckets is empty, the algorithm inserts x to that free bucket and the insertion completes. If neither bucket has space, the item selects one of the candidate buckets, kicks out the existing item and re-inserts this victim item to its own alternate location. This procedure may repeat until a vacant bucket is found. If no vacant bucket is found,this hash table is considered too full to insert. Although cuckoo hashing may execute a sequence of displacements, its amortized insertion time is $O(1)$.
 
+fingerprint size $f$, $q$ items sharding the same two buckets in the $m$ buckets is $(2/m * 1/2^f) ^ {q-1}$.
+
 ## Insert
 
 ```plaintext
-Insert(x)
-f = fingerprint(x)
-i1 = hash(x)
-i2 = i1 xor hash(f)
-if bucket[i1 ] or bucket[i2 ] has an empty entry then
-  add f to that bucket;
-  return Done;
-
-// must relocate existing items;
-i = randomly pick i1 or i2 ;
-for n = 0; n < MaxNumKicks; n++ do
-  randomly select an entry e from bucket[i];
-  swap f and the fingerprint stored in entry e;
-  i = i xor hash( f );
-  if bucket[i] has an empty entry then
-    add f to bucket[i];
+Insert(x):
+  f = fingerprint(x)
+  i1 = hash(x)
+  i2 = i1 xor hash(f)
+  if bucket[i1 ] or bucket[i2 ] has an empty entry then
+    add f to that bucket;
     return Done;
 
-// Hashtable is considered full;
-return Failure;
+  // must relocate existing items;
+  i = randomly pick i1 or i2 ;
+  for n = 0; n < MaxNumKicks; n++ do
+    randomly select an entry e from bucket[i];
+    swap f and the fingerprint stored in entry e;
+    i = i xor hash( f );
+    if bucket[i] has an empty entry then
+      add f to bucket[i];
+      return Done;
+
+  // Hashtable is considered full;
+  return Failure;
+```
+
+## Lookup
+
+```plaintext
+Lookup(x)
+  f = fingerprint(x)
+  i1 = hash(x)
+  i2 = i1 xor hash(f)
+  if bucket[i1] or bucket[i2] has f then
+    return True;
+  return False;
+```
+
+## Delete
+
+```plaintext
+Delete(x)
+  f = fingerprint(x)
+  i1 = hash(x)
+  i2 = i1 xor hash(f)
+  if bucket[i1] or bucket[i2] has f then
+    remove a copy of f from this bucket;
+    return True;
+  return False;
 ```
