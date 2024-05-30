@@ -8,6 +8,9 @@ $$m=-nlnp/(ln2)^2$$
 $$bpe=m/n=-lnp/(ln2)^2$$
 $$k=ln2*bpe=ln2*m/n=ln2*-lnp/(ln2)^2$$
 
+Optimal number of bits: $bits = (n * ln(p)) / ln(2) ^ 2$
+Optimal number of hash functions: $hashes = bpe * ln(2)$
+
 ## Cuckoo Filter
 
 ## Overview
