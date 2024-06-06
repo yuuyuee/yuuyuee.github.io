@@ -12,6 +12,13 @@ openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
 openssl rsa -in private.pem -pubout -out public.pem
 ```
 
+## View key
+
+```bash
+openssl rsa -in private.perm -modulus -text -noout
+openssl rsa -pubin -in public.perm -modulus -text -noout
+```
+
 ## Generate HTTPS cert
 
 ```bash
