@@ -120,6 +120,15 @@ struct timespec {
 };
 
 // requirements _POSIX_C_SOURCE >= 199309L and link with -lrt
+// clockid:
+// CLOCK_REALTIME
+//    A  settable system-wide clock that measures real (i.e., wall-clock) time.
+//    Its time represents seconds and nanoseconds since the Epoch.
+//    When its time is changed, timers for a relative interval are unaffected,
+//    but timers for an absolute point in time are affected.
+// CLOCK_MONOTONIC
+//     A nonsettable system-wide clock that represents monotonic time since—as
+//     described by POSIX—"some unspecified point in the past".
 
 int clock_getres(clockid_t clockid, struct timespec *res);
 int clock_gettime(clockid_t clockid, struct timespec *tp);
@@ -130,11 +139,19 @@ int clock_settime(clockid_t clockid, const struct timespec *tp);
 
 Most computers have a (battery-powered) hardware clock which the kernel reads at boot time in order to initialize the software clock.  For further details, see rtc(4) and hwclock(8).
 
+A key difference between an RTC and the system clock is that RTCs run even when the system is in a low power state (including "off"), and the system clock can't. Until it is initialized, the system clock can only report time since system boot ... not since the POSIX Epoch. So at boot time, and after resuming from a system low power state, the system clock will often be set to the current wall clock time using an RTC. Systems without an RTC need to set the system clock using another clock, maybe across the network or by entering that data manually.
+
+```c
+#include <linux/rtc.h>
+
+int ioctl(fd, RTC_request, param);
+```
+
 ## The software clock, HZ and jiffies
 
-The accuracy of various system calls that set timeouts, (e.g., select(2), sigtimedwait(2)) and measure CPU time (e.g., getrusage(2)) is limited by the resolution of the software clock, a clock maintained by the kernel which measures time in jiffies.  The size of a jiffy is determined by the value of the kernel constant HZ.
+The accuracy of various system calls that set timeouts, (e.g., select(2), sigtimedwait(2)) and measure CPU time (e.g., getrusage(2)) is limited by the resolution of the software clock, a clock maintained by the kernel which measures time in jiffies. The size of a jiffy is determined by the value of the kernel constant HZ.
 
-The  value  of  HZ varies across kernel versions and hardware platforms.  On i386 the situation is as follows: on kernels up to and including 2.4.x, HZ was 100, giving a jiffy value of 0.01 seconds;starting with 2.6.0, HZ was raised to 1000, giving a jiffy of 0.001 seconds.  Since kernel 2.6.13, the HZ value is a kernel configuration parameter and can be 100, 250 (the default) or 1000, yielding  a jiffies value of, respectively, 0.01, 0.004, or 0.001 seconds.  Since kernel 2.6.20, a further frequency is available: 300, a number that divides evenly for the common video frame rates (PAL, 25 HZ; NTSC, 30 HZ).
+The value of HZ varies across kernel versions and hardware platforms. On i386 the situation is as follows: on kernels up to and including 2.4.x, HZ was 100, giving a jiffy value of 0.01 seconds;starting with 2.6.0, HZ was raised to 1000, giving a jiffy of 0.001 seconds. Since kernel 2.6.13, the HZ value is a kernel configuration parameter and can be 100, 250 (the default) or 1000, yielding a jiffies value of, respectively, 0.01, 0.004, or 0.001 seconds. Since kernel 2.6.20, a further frequency is available: 300, a number that divides evenly for the common video frame rates (PAL, 25 HZ; NTSC, 30 HZ).
 
 The times(2) system call is a special case. It reports times with a granularity defined by the kernel constant USER_HZ. User-space applications can determine the value of this constant using sysconf(_SC_CLK_TCK).
 
@@ -171,3 +188,8 @@ Various system calls allow a process to set a timer that expires at some point i
 ## Timer slack
 
 Since Linux 2.6.28, it is possible to control the "timer slack" value for a thread. The timer slack is the length of time by which the kernel may delay the wake-up of certain system calls that block with a timeout. Permitting this delay allows the kernel to coalesce wake-up events, thus possibly reducing the number of system wake-ups and saving power. For more details, see the description of PR_SET_TIMERSLACK in prctl(2).
+
+## Time synchronization
+
+NTP (Network time protocol)
+PTP (precise time protocol)
