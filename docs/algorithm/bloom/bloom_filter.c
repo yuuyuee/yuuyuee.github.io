@@ -72,13 +72,15 @@ uint64_t bloom_filter_hash(const void* buffer, size_t len) {
 }
 
 struct bloom_filter {
-  /* False positives */
+  /* false positives */
   double p;
+  /* bits per element */
   double bpe;
-  /* Elements size */
+  /* elements size */
   uint64_t n;
-  /* Bits of bloom filter */
+  /* bytes of bloom filter */
   uint64_t m;
+  /* hash counts */
   uint64_t k;
 
   uint64_t bytes;

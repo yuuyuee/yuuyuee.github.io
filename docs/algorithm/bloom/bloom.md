@@ -33,9 +33,12 @@ Four major advantages:
 2. Provides higher performance than traditional Bloom Filter, even close to full (e.g. 95% space utilized)
 3. Easier to implement
 4. Uses less than Bloom Filter if the target false positive rate $e$ is less than 3%
+$TPR = TP / (TP + FN)$
+$TNR = TN / (TN + FP)$
+$FPR = FP / (FP + TN)$
+$FNR = FN / (FN + TP)$
 
-A basic cuckoo hash table consists of an array of buckets where each item has two candidate buckets determined by hash functions h1 (x) and
-h2 (x). Most practical implementations of cuckoo hashing using buckets that hold multiple items.
+A basic cuckoo hash table consists of an array of buckets where each item has two candidate buckets determined by hash functions h1 (x) and h2 (x). Most practical implementations of cuckoo hashing using buckets that hold multiple items.
 
 The lookup procedure checks both buckets to see if either contains this item.
 
