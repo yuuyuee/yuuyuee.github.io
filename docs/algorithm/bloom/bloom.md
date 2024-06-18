@@ -44,7 +44,28 @@ The lookup procedure checks both buckets to see if either contains this item.
 
 Inserting a new item x in to a hash table, If either of x’s two buckets is empty, the algorithm inserts x to that free bucket and the insertion completes. If neither bucket has space, the item selects one of the candidate buckets, kicks out the existing item and re-inserts this victim item to its own alternate location. This procedure may repeat until a vacant bucket is found. If no vacant bucket is found,this hash table is considered too full to insert. Although cuckoo hashing may execute a sequence of displacements, its amortized insertion time is $O(1)$.
 
-fingerprint size $f$, $q$ items sharding the same two buckets in the $m$ buckets is $(2/m * 1/2^f) ^ {q-1}$.
+![cuckoo hashing](cuckoo_hash.png)
+
+$f = fingerprint(x)$
+$h1(x) = hash(x)$
+$h2(x) = h1(x) \bigoplus hash(f)$
+
+
+![Load factor](load_factor.png)
+
+The fingerprint size must be $f = ceill(log(n)/b)$ bits.
+
+The upper bound of the total probability of a false fingerprint hit is $1-(1-1/{2^f})^{2b} \approx 2b/2^f$
+
+Minimal fingerprint size required is approximately $f \ge ceil(log2(2b/e)) = ceil(log2(1/e) + log2(2b))$
+
+![Space and lookup cost of Bloom filters and three cuckoo filters](space_and_lookup_cost.png)
+
+![Amortized space cost per item vs. measured false positive rate](amortized_space_cost_per_item_and_false_positive_rate.png)
+
+The space-optimal bucket size depends on the target false positive rate $e$: when $e$ > 0.002, having two entries per bucket yields slightly better results than using four entries per bucket; when $e$ decreases to 0.00001 < $e$ ≤ 0.002, four entries per bucket minimizes space.
+
+In summary, we choose (2, 4)-cuckoo filter (i.e., each item has two candidate buckets and each bucket has up to four fingerprints) as the default configuration, because it achieves the best or close-to-best space efficiency for the false positive rates that most practical applications may be interested in.
 
 ## Insert
 
