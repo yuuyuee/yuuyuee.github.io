@@ -1,8 +1,10 @@
 # CPU&NUMA
 
 1. numa node path
-    # Core per socket, physic core
-    /sys/devices/system/node/node{socket_id}/cpu{logic_core_id}/topology/core_id
+    Core per socket, physic core
+
+    1. /sys/devices/system/node/node{socket_id}/cpu
+    2. {logic_core_id}/topology/core_id
 
 2. cpu path
     /sys/device/system/cpu/cpu{core_id}

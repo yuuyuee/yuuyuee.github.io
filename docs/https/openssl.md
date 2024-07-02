@@ -31,3 +31,9 @@ openssl req -new -key key.pem -out csr.pem
 # generating self-signed certificate
 openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
 ```
+
+## Generate with keytool
+
+```bash
+keytool -genkey -alias tomcat -keyalg RSA -keystore /path/to/your/keystore.jks
+```
