@@ -67,6 +67,7 @@ void NodeTraverse2(Node* node, const std::function<void(int)>& visitor) {
       if (pre->right == nullptr) {
         pre->right = cur;
         cur = cur->left;
+        std::cout << "P(" << pre->value << ") => C(" << cur->value << ")" << std::endl;
       } else {
         // revert the changes mode in the `if' part to restore the
         // original tree i.e., fix the right child of predecessor
@@ -121,25 +122,30 @@ int main() {
   NodeInsert(&tree, 3);
   NodeInsert(&tree, 1);
   NodeInsert(&tree, 5);
+  NodeInsert(&tree, 0);
   NodeInsert(&tree, 2);
   NodeInsert(&tree, 4);
   NodeInsert(&tree, 6);
   NodeInsert(&tree, 17);
   NodeInsert(&tree, 16);
   NodeInsert(&tree, 21);
+  NodeInsert(&tree, 18);
+  NodeInsert(&tree, 22);
 
   NodeTraverse(tree, [](int value) { std::cout << value << " "; });
   std::cout << std::endl;
 
+  std::cout << std::endl;
   NodeTraverse2(tree, [](int value) { std::cout << value << " "; });
   std::cout << std::endl;
 
-  NodeTraverse(tree, [](int value) { std::cout << value << " "; });
-  std::cout << std::endl;
+  // NodeTraverse(tree, [](int value) { std::cout << value << " "; });
+  // std::cout << std::endl;
 
-  NodeTraverse3(tree, [](int value) { std::cout << value << " "; });
-  std::cout << std::endl;
+  // NodeTraverse3(tree, [](int value) { std::cout << value << " "; });
+  // std::cout << std::endl;
 
+  std::cout << std::endl;
   NodeTraverse(tree, [](int value) { std::cout << value << " "; });
   std::cout << std::endl;
 
