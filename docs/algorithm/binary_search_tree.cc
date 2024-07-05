@@ -5,19 +5,35 @@
 struct Node {
   Node* left;
   Node* right;
+  Node* parent;
   int value;
 };
 
-void NodeInit(Node** node, int value) {
-  Node* tmp = new Node;
-  tmp->left = tmp->right = nullptr;
-  tmp->value = value;
-  *node = tmp;
+Node* NodeAlloc(int value) {
+  Node* node = new Node;
+  node->parent = nullptr;
+  node->left = nullptr;
+  node->right = nullptr;
+  node->value = value;
+  return node;
 }
 
-void NodeInit2(Node** node) {
+void NodeFree(Node* node) {
+  if (!NodeEmpty(node)) {
+    NodeFree(node->left);
+    NodeFree(node->right);
+    delete node;
+  }
+}
+
+void NodeInit(Node** node) {
   *node = nullptr;
 }
+
+void NodeDestroy(Node** node) {
+
+}
+
 
 int NodeEmpty(const Node* node) {
   return !node ? 1 : 0;
@@ -56,6 +72,7 @@ void NodeTraverse2(Node* node, const std::function<void(int)>& visitor) {
   Node* pre;
   Node* cur = node;
 
+  int i = 0;
   while (cur != nullptr) {
     if (cur->left != nullptr) {
       // find the inorder predecessor of current
@@ -67,7 +84,6 @@ void NodeTraverse2(Node* node, const std::function<void(int)>& visitor) {
       if (pre->right == nullptr) {
         pre->right = cur;
         cur = cur->left;
-        std::cout << "P(" << pre->value << ") => C(" << cur->value << ")" << std::endl;
       } else {
         // revert the changes mode in the `if' part to restore the
         // original tree i.e., fix the right child of predecessor
@@ -99,19 +115,48 @@ void NodeTraverse3(Node* node, const std::function<void(int)>& visitor) {
 void NodeInsert(Node** node, int value) {
   if (NodeEmpty(*node)) {
     NodeInit(node, value);
-  } else if ((*node)->value >= value) {
+  } else if ((*node)->value > value) {
     NodeInsert(&(*node)->left, value);
   } else {
     NodeInsert(&(*node)->right, value);
   }
+
+  {
+    Node* p = *node;
+    while (p) {
+      if (p->value > value)
+        p = p->left;
+      else
+        p = p->right;
+    }
+  }
 }
 
-void NodeFree(Node* node) {
-  if (!NodeEmpty(node)) {
-    NodeFree(node->left);
-    NodeFree(node->right);
-    delete node;
+// O(h)
+const Node* NodeSearch(const Node* node, int value) {
+  while (node) {
+    if (node->value == value)
+      return node;
+    if (node->value > value)
+      node = node->left;
+    else
+      node = node->right;
   }
+  return node;
+}
+
+// O(h)
+const Node* NodeMinimum(const Node* node) {
+  while (node)
+    node = node->left;
+  return node;
+}
+
+// O(h)
+const Node* NodeMaximum(const Node* node) {
+  while (node)
+    node = node->right;
+  return node;
 }
 
 int main() {
@@ -127,8 +172,9 @@ int main() {
   NodeInsert(&tree, 4);
   NodeInsert(&tree, 6);
   NodeInsert(&tree, 17);
-  NodeInsert(&tree, 16);
+  NodeInsert(&tree, 15);
   NodeInsert(&tree, 21);
+  NodeInsert(&tree, 16);
   NodeInsert(&tree, 18);
   NodeInsert(&tree, 22);
 
