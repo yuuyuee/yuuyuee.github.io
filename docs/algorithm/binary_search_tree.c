@@ -1,51 +1,53 @@
-#include <iostream>
-#include <stack>
-#include <functional>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
-struct Node {
-  Node* left;
-  Node* right;
-  Node* parent;
-  int value;
+struct node {
+    struct node* left;
+    struct node* right;
+    struct node* parent;
+    int value;
 };
 
-Node* NodeAlloc(int value) {
-  Node* node = new Node;
-  node->parent = nullptr;
-  node->left = nullptr;
-  node->right = nullptr;
-  node->value = value;
-  return node;
+// O(h)
+struct node* node_minimum(struct node* node) {
+    while (node)
+        node = node->left;
+    return node;
 }
 
-void NodeFree(Node* node) {
-  if (!NodeEmpty(node)) {
-    NodeFree(node->left);
-    NodeFree(node->right);
-    delete node;
-  }
+// O(h)
+struct node* node_maximum(struct node* node) {
+    while (node)
+        node = node->right;
+    return node;
 }
 
-void NodeInit(Node** node) {
-  *node = nullptr;
+struct node* node_alloc(int value) {
+    struct node* node = (struct node*) malloc(sizeof(*node));
+    node->parent = NULL;
+    node->left = NULL;
+    node->right = NULL;
+    node->value = value;
+    return node;
 }
 
-void NodeDestroy(Node** node) {
-
+// O(h)
+void node_free(struct node* node) {
+    while (node) {
+        node_free(node->right);
+        struct node* ptr = node->left;
+        free(node);
+        node = ptr;
+    }
 }
 
-
-int NodeEmpty(const Node* node) {
-  return !node ? 1 : 0;
-}
-
-// Inorder traverse the binary tree with recursion
-void NodeTraverse(const Node* node, const std::function<void(int)>& visitor) {
-  if (!NodeEmpty(node)) {
-    NodeTraverse(node->left, visitor);
-    visitor(node->value);
-    NodeTraverse(node->right, visitor);
-  }
+void node_traverse(const struct node* node, void (*visitor)(int)) {
+    if (node) {
+        node_traverse(node->left, visitor);
+        visitor(node->value);
+        node_traverse(node->right, visitor);
+    }
 }
 
 // Inorder traverse the binary tree without recursion and without stack
@@ -66,30 +68,28 @@ void NodeTraverse(const Node* node, const std::function<void(int)>& visitor) {
 //              a) Make current as the right child of that rightmost
 //                 node we found; and
 //              b) Go to this left child, i.e., current = current->left
-void NodeTraverse2(Node* node, const std::function<void(int)>& visitor) {
-  // if (NodeEmpty(node))
-  //   return;
-  Node* pre;
-  Node* cur = node;
+void node_traverse2(const struct node* node, void (*visitor)(int)) {
+  struct node* pre;
+  struct node* cur = (struct node*) node;
 
   int i = 0;
-  while (cur != nullptr) {
-    if (cur->left != nullptr) {
+  while (cur) {
+    if (cur->left) {
       // find the inorder predecessor of current
       pre = cur->left;
-      while (pre->right != nullptr && pre->right != cur)
+      while (pre->right && pre->right != cur)
         pre = pre->right;
 
       // make sure as the right child of its inorder predecessor
-      if (pre->right == nullptr) {
-        pre->right = cur;
-        cur = cur->left;
-      } else {
+      if (pre->right) {
         // revert the changes mode in the `if' part to restore the
         // original tree i.e., fix the right child of predecessor
-        pre->right = nullptr;
+        pre->right = NULL;
         visitor(cur->value);
         cur = cur->right;
+      } else {
+        pre->right = cur;
+        cur = cur->left;
       }
     } else {
       visitor(cur->value);
@@ -98,19 +98,63 @@ void NodeTraverse2(Node* node, const std::function<void(int)>& visitor) {
   }
 }
 
-void NodeTraverse3(Node* node, const std::function<void(int)>& visitor) {
-  std::stack<Node*> stack;
-  while (!NodeEmpty(node) || !stack.empty()) {
-    while (!NodeEmpty(node)) {
-      stack.push(node);
-      node = node->left;
+void stack_push(const void*** base, int* top, int* max, const void* value) {
+    if (*top >= *max) {
+        int new_max = *max == 0 ? 10 : *max * 2;
+        *base = realloc(*base, sizeof(**base) * new_max);
+        assert(*base && "realloc failed");
+        *max = new_max;
     }
-    Node* tmp = stack.top();
-    stack.pop();
-    visitor(tmp->value);
-    node = tmp->right;
-  }
+
+    (*base)[((*top)++)] = value;
 }
+
+const void* stack_pop(const void** base, int* top) {
+    assert(*top >= 0);
+    return base[(*top)--];
+}
+
+void node_traverse3(const struct node* node, void (*visitor)(int)) {
+    const void** base;
+    int top = 0, max = 0;
+
+    while (node || top > 0) {
+        while (node) {
+            stack_push(&base, &top, &max, node);
+            node = node->left;
+        }
+
+        node = (const struct node*) stack_pop(base, &top);
+        visitor(node->value);
+        node = node->right;
+    }
+}
+
+struct binary_search_tree {
+    struct node* root;
+    size_t size;
+};
+
+void bst_init(struct binary_search_tree* tree) {
+    tree->root = NULL;
+    tree->size = 0;
+}
+
+
+void bst_free(struct binary_search_tree* tree) {
+    node_free(tree->root);
+    tree->size = 0;
+}
+
+int bst_empty(const struct binary_search_tree* tree) {
+  return tree->size == 0;
+}
+
+// Inorder traverse the binary tree with recursion
+void bst_traverse(const struct binary_search_tree* tree, void (*visitor)(int)) {
+    node_traverse(tree->root, visitor);
+}
+
 
 void NodeInsert(Node** node, int value) {
   if (NodeEmpty(*node)) {
@@ -145,19 +189,7 @@ const Node* NodeSearch(const Node* node, int value) {
   return node;
 }
 
-// O(h)
-const Node* NodeMinimum(const Node* node) {
-  while (node)
-    node = node->left;
-  return node;
-}
 
-// O(h)
-const Node* NodeMaximum(const Node* node) {
-  while (node)
-    node = node->right;
-  return node;
-}
 
 int main() {
   Node* tree;
