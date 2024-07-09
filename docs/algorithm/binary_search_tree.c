@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <string.h>
 
 struct node {
     struct node* left;
@@ -22,6 +21,30 @@ struct node* node_maximum(struct node* node) {
     while (node)
         node = node->right;
     return node;
+}
+
+// O(h)
+struct node* node_predecessor(struct node* node) {
+    assert(node);
+
+    if (node->left)
+        return node_maximum(node->left);
+    return NULL;
+}
+
+// O(h)
+struct node* node_successor(struct node* node) {
+    assert(node);
+
+    if (node->right)
+        return node_minimum(node->right);
+
+    struct node* ptr = node->parent;
+    while (ptr && ptr->right != node) {
+        node = ptr;
+        ptr = node->parent;
+    }
+    return ptr;
 }
 
 struct node* node_alloc(int value) {
@@ -79,7 +102,6 @@ void node_traverse2(const struct node* node, void (*visitor)(int)) {
             while (pre->right && pre->right != cur)
                 pre = pre->right;
 
-            // make sure as the right child of its inorder predecessor
             if (pre->right) {
                 // revert the changes mode in the `if' part to restore the
                 // original tree i.e., fix the right child of predecessor
@@ -87,6 +109,7 @@ void node_traverse2(const struct node* node, void (*visitor)(int)) {
                 visitor(cur->value);
                 cur = cur->right;
             } else {
+                // make sure as the right child of its inorder predecessor
                 pre->right = cur;
                 cur = cur->left;
             }
@@ -156,17 +179,26 @@ void node_traverse3(const struct node* node, void (*visitor)(int)) {
 }
 
 // O(h)
-void node_insert(struct node** node, int value) {
-    while (*node)
-        node = (*node)->value > value ? &(*node)->left : &(*node)->right;
-    *node = node_alloc(value);
+void node_insert(struct node* node, int value) {
+    assert(node);
+    struct node* parent = NULL;
+    struct node* new_node = node_alloc(value);
+
+    while (node) {
+        parent = node;
+        node = node->value > value ? node->left : node->right;
+    }
+    new_node->parent = parent;
+    if (parent->value > value) parent->left = new_node;
+    else parent->right = new_node;
 }
 
 // O(h)
-int* node_search(struct node* node, int value) {
+struct node* node_search(struct node* node, int value) {
+    assert(node);
     while (node && node->value != value)
         node = node->value > value ? node->left : node->right;
-    return node ? &node->value : NULL;
+    return node;
 }
 
 struct bst {
@@ -202,12 +234,18 @@ void bst_traverse3(const struct bst* tree, void (*visitor)(int)) {
 }
 
 void bst_insert(struct bst* tree, int value) {
-    node_insert(&tree->root, value);
+    if (bst_empty(tree))
+        tree->root = node_alloc(value);
+    else
+        node_insert(tree->root, value);
     ++tree->size;
 }
 
 int* bst_search(struct bst* tree, int value) {
-    return node_search(tree->root, value);
+    if (bst_empty(tree))
+        return NULL;
+    struct node* node = node_search(tree->root, value);
+    return node ? &node->value : NULL;
 }
 
 void visitor(int v) { printf("%d ", v); }
