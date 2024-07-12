@@ -201,6 +201,10 @@ struct node* node_search(struct node* node, int value) {
     return node;
 }
 
+void node_delete(struct node* node, int value) {
+
+}
+
 struct bst {
     struct node* root;
     size_t size;
@@ -246,6 +250,13 @@ int* bst_search(struct bst* tree, int value) {
         return NULL;
     struct node* node = node_search(tree->root, value);
     return node ? &node->value : NULL;
+}
+
+void bst_delete(struct bst* tree, int value) {
+    if (!bst_empty(tree)) {
+        node_delte(tree->root, value);
+        --tree->size;
+    }
 }
 
 void visitor(int v) { printf("%d ", v); }
