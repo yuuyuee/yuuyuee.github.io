@@ -195,14 +195,28 @@ void node_insert(struct node* node, int value) {
 
 // O(h)
 struct node* node_search(struct node* node, int value) {
-    assert(node);
     while (node && node->value != value)
         node = node->value > value ? node->left : node->right;
     return node;
 }
 
 void node_delete(struct node* node, int value) {
+    struct node* node = node_search(node, value);
+    if (node) {
 
+        if (node->left && node->right) {
+
+        } else if (!node->left && !node->right) {
+            // if node no children, the simply remove it by modifying
+            // its parent to replace node with NULL as its child.
+
+        } else if (node->left || node->right) {
+            // If node has just one child, then elevate that child to
+            // take node's position in the tree by modifying node's
+            // parent to replace node by node’s child.
+
+        }
+    }
 }
 
 struct bst {
@@ -246,8 +260,6 @@ void bst_insert(struct bst* tree, int value) {
 }
 
 int* bst_search(struct bst* tree, int value) {
-    if (bst_empty(tree))
-        return NULL;
     struct node* node = node_search(tree->root, value);
     return node ? &node->value : NULL;
 }
