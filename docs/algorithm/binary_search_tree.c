@@ -11,14 +11,16 @@ struct node {
 
 // O(h)
 struct node* node_minimum(struct node* node) {
-    while (node)
+    assert(node);
+    while (node->left)
         node = node->left;
     return node;
 }
 
 // O(h)
 struct node* node_maximum(struct node* node) {
-    while (node)
+    assert(node);
+    while (node->right)
         node = node->right;
     return node;
 }
@@ -26,7 +28,6 @@ struct node* node_maximum(struct node* node) {
 // O(h)
 struct node* node_predecessor(struct node* node) {
     assert(node);
-
     if (node->left)
         return node_maximum(node->left);
     return NULL;
@@ -35,16 +36,15 @@ struct node* node_predecessor(struct node* node) {
 // O(h)
 struct node* node_successor(struct node* node) {
     assert(node);
-
     if (node->right)
         return node_minimum(node->right);
 
-    struct node* ptr = node->parent;
-    while (ptr && ptr->right != node) {
-        node = ptr;
-        ptr = node->parent;
+    struct node* parent = node->parent;
+    while (parent && parent->right == node) {
+        node = parent;
+        parent = node->parent;
     }
-    return ptr;
+    return parent;
 }
 
 struct node* node_alloc(int value) {
@@ -179,43 +179,73 @@ void node_traverse3(const struct node* node, void (*visitor)(int)) {
 }
 
 // O(h)
-void node_insert(struct node* node, int value) {
-    assert(node);
+void node_insert(struct node* node, struct node* new_node) {
+    assert(node && new_node);
     struct node* parent = NULL;
-    struct node* new_node = node_alloc(value);
 
     while (node) {
         parent = node;
-        node = node->value > value ? node->left : node->right;
+        if (node->value > new_node->value)
+            node = node->left;
+        else
+            node = node->right;
     }
     new_node->parent = parent;
-    if (parent->value > value) parent->left = new_node;
-    else parent->right = new_node;
+    if (parent->value > new_node->value)
+        parent->left = new_node;
+    else
+        parent->right = new_node;
 }
 
 // O(h)
 struct node* node_search(struct node* node, int value) {
-    while (node && node->value != value)
-        node = node->value > value ? node->left : node->right;
+    while (node && node->value != value) {
+        if (node->value > value)
+            node = node->left;
+        else
+            node = node->right;
+    }
     return node;
 }
 
-void node_delete(struct node* node, int value) {
-    struct node* node = node_search(node, value);
-    if (node) {
+void node_transplant(struct node** root, struct node* u, struct node* v) {
+    if (!u->parent)
+        *root = v;
+    else if (u->parent->left == u)
+        u->parent->left = v;
+    else
+        u->parent->right = v;
+    if (v)
+        u->parent = u->parent;
+}
 
-        if (node->left && node->right) {
-
-        } else if (!node->left && !node->right) {
-            // if node no children, the simply remove it by modifying
-            // its parent to replace node with NULL as its child.
-
-        } else if (node->left || node->right) {
-            // If node has just one child, then elevate that child to
-            // take node's position in the tree by modifying node's
-            // parent to replace node by node’s child.
-
-        }
+void node_delete(struct node** root, struct node* node) {
+    assert(node);
+    if (!node->left) {
+        // If node has just one child, then elevate that child to
+        // take node’s position in the tree by modifying node’s parent to
+        // replace node by node’s child.
+        // If node has no children, then simply remove it by modifying
+        // its parent to replace node with NULL as its child.
+        node_transplant(root, node, node->right);
+    } else if (!node->right) {
+        node_transplant(root, node, node->left);
+    } else {
+        // If node has two children, ﬁnd node’s successor y—which must
+        // belong to node’s right subtree—and move y to take node’s
+        // position in the tree. The rest of node’s original right subtree
+        // becomes y’s new right subtree, and node’s left subtree becomes
+        // y’s new left subtree. Because y is node’s successor, it cannot
+        // have a left child, and y’s original right child moves into y’s
+        // original position, with the rest of y’s original right subtree
+        // following automatically. This case is the tricky one because,
+        // as we’ll see, it matters whether y is node’s right child.
+        struct node* tmp = NULL;
+        if (node->right)
+            tmp = node_minimum(node->right);
+        if (tmp)
+            node_transplant(root, tmp, tmp->right);
+        node_transplant(root, node, tmp);
     }
 }
 
@@ -252,10 +282,11 @@ void bst_traverse3(const struct bst* tree, void (*visitor)(int)) {
 }
 
 void bst_insert(struct bst* tree, int value) {
+    struct node* node = node_alloc(value);
     if (bst_empty(tree))
-        tree->root = node_alloc(value);
+        tree->root = node;
     else
-        node_insert(tree->root, value);
+        node_insert(tree->root, node);
     ++tree->size;
 }
 
@@ -266,8 +297,11 @@ int* bst_search(struct bst* tree, int value) {
 
 void bst_delete(struct bst* tree, int value) {
     if (!bst_empty(tree)) {
-        node_delte(tree->root, value);
-        --tree->size;
+        struct node* node = node_search(tree->root, value);
+        if (node) {
+            node_delete(&tree->root, node);
+            --tree->size;
+        }
     }
 }
 
