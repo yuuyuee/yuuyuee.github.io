@@ -8,4 +8,4 @@
 * [Designing Data-Intensive Applications](docs/ddia/index.md)
 * [7 Common Object-Oriented Design Principles](docs/design_principle.md)
 * [Design Patterns](docs/design_patterns.md)
-* [CppCoreGuidelines](docs/CppCoreGuidelines/index.html)
+* [CppCoreGuidelines](docs/CppCoreGuidelines/CppCoreGuidelines.md)

@@ -215,8 +215,11 @@ void node_transplant(struct node** root, struct node* u, struct node* v) {
         u->parent->left = v;
     else
         u->parent->right = v;
-    if (v)
-        u->parent = u->parent;
+    if (v) {
+        v->parent = u->parent;
+        v->left = u->left;
+        v->right = u->right;
+    }
 }
 
 void node_delete(struct node** root, struct node* node) {
@@ -240,13 +243,15 @@ void node_delete(struct node** root, struct node* node) {
         // original position, with the rest of y’s original right subtree
         // following automatically. This case is the tricky one because,
         // as we’ll see, it matters whether y is node’s right child.
-        struct node* tmp = NULL;
+        struct node* ptr = NULL;
         if (node->right)
-            tmp = node_minimum(node->right);
-        if (tmp)
-            node_transplant(root, tmp, tmp->right);
-        node_transplant(root, node, tmp);
+            ptr = node_minimum(node->right);
+        if (ptr)
+            node_transplant(root, ptr, ptr->right);
+        node_transplant(root, node, ptr);
     }
+    node->parent = node->left = node->right = NULL;
+    node_free(node);
 }
 
 struct bst {
@@ -333,6 +338,37 @@ int main() {
     printf("\n");
 
     bst_traverse3(&tree, visitor);
+    printf("\n\n");
+
+    ///////////////////////////////
+    printf("Remove 0: ");
+    bst_delete(&tree, 0);
+    bst_traverse2(&tree, visitor);
+    printf("\n");
+
+    printf("Remove 22: ");
+    bst_delete(&tree, 22);
+    bst_traverse2(&tree, visitor);
+    printf("\n");
+
+    printf("Remove 3: ");
+    bst_delete(&tree, 3);
+    bst_traverse2(&tree, visitor);
+    printf("\n");
+
+    printf("Remove 18: ");
+    bst_delete(&tree, 18);
+    bst_traverse2(&tree, visitor);
+    printf("\n");
+
+    printf("Remove 17: ");
+    bst_delete(&tree, 17);
+    bst_traverse2(&tree, visitor);
+    printf("\n");
+
+    printf("Remove 10: ");
+    bst_delete(&tree, 10);
+    bst_traverse2(&tree, visitor);
     printf("\n");
 
     bst_free(&tree);
