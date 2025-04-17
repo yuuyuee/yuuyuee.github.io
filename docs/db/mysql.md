@@ -138,3 +138,74 @@ ALTER TABLE table_name REBUILD PARTITION partition_name;
 ALTER TABLE table_name DEFRAGMENT PARTITION partition_name;
 ```
 
+## Daily partition maintenance
+
+```bash
+#!/bin/bash
+# 文件名: advanced_partition_maintenance.sh
+# 功能: 自动添加新分区 + 自动清理旧分区
+
+# 配置区
+MYSQL_CONN="-h127.0.0.1 -uroot -p'your_password'"
+DB_NAME="your_database"
+TABLE_NAME="logs"
+KEEP_DAYS=30  # 保留最近30天的分区
+
+# 日期计算
+CURRENT_TS=$(date +%s)
+TOMORROW=$(date -d "+1 day" +"%Y-%m-%d")
+NEW_PARTITION_NAME="p$(date -d "+1 day" +"%Y%m%d")"
+
+# 1. 添加新分区
+ADD_PARTITION_SQL="ALTER TABLE \`${DB_NAME}\`.\`${TABLE_NAME}\`
+ADD PARTITION (PARTITION ${NEW_PARTITION_NAME} VALUES LESS THAN (TO_DAYS('${TOMORROW}'))"
+
+mysql ${MYSQL_CONN} -e "${ADD_PARTITION_SQL}"
+
+# 2. 清理旧分区
+# 获取所有分区列表
+PARTITION_LIST=$(mysql ${MYSQL_CONN} -N -e "
+SELECT partition_name
+FROM information_schema.partitions
+WHERE table_schema='${DB_NAME}'
+AND table_name='${TABLE_NAME}'
+AND partition_name LIKE 'p%'
+AND partition_name != 'pmax'")
+
+for PARTITION in $PARTITION_LIST; do
+    # 从分区名提取日期 (p20230101 -> 20230101)
+    PARTITION_DATE=${PARTITION:1}
+
+    # 转换为时间戳
+    PARTITION_TS=$(date -d "${PARTITION_DATE:0:4}-${PARTITION_DATE:4:2}-${PARTITION_DATE:6:2}" +%s 2>/dev/null)
+
+    # 计算分区天数差
+    if [[ -n "$PARTITION_TS" ]]; then
+        DAYS_DIFF=$(( (CURRENT_TS - PARTITION_TS) / 86400 ))
+
+        if [ $DAYS_DIFF -gt $KEEP_DAYS ]; then
+            # 执行分区删除
+            mysql ${MYSQL_CONN} -e "
+            ALTER TABLE \`${DB_NAME}\`.\`${TABLE_NAME}\`
+            DROP PARTITION ${PARTITION}"
+
+            echo "已删除旧分区: ${PARTITION}"
+        fi
+    fi
+done
+```
+
+```bash
+# 每天凌晨1点执行
+0 1 * * * /path/to/daily_partition_maintenance.sh >> /var/log/partition_maintenance.log 2>&1
+```
+
+```sql
+-- 检查未来分区是否已创建
+SELECT partition_name, partition_description
+FROM information_schema.partitions
+WHERE table_schema = 'your_database'
+AND table_name = 'your_table'
+ORDER BY partition_description DESC LIMIT 5;
+```
+
