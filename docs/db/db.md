@@ -881,3 +881,43 @@ or
 pg_dumpall > dumpfile
 psql -f dumpfile postgres
 ```
+
+### MySQL
+
+```sql
+
+-- CREATE ROLE 'name'@'host' IDENTIFIED BY 'password';
+-- host:
+-- localhost - Local login only
+-- % - Any host to login
+-- privilege:
+-- LOGIN - login privilege
+-- SUPERUSER - superuser status that can passby all permission checks
+-- CREATEDB - database creation
+-- CREATEROLE - role creation
+-- REPLICATION LOGIN - initiating replication
+-- PASSWORD 'string' - password
+-- WITH INHERIT <TRUE|FALSE> - inheritance of privileges
+-- CONNECTION LIMIT 'integer' - connection limit
+CREATE ROLE 'test'@'localhost' IDENTIFIED BY '123456';
+
+
+-- GRANT <privileges list> ON database.table TO 'user'@'host' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'USER'@'%' WITH GRANT OPTION;
+-- WITH GRANT OPTION - Alloc user to grant for anyone
+FLUSH PRIVILEGES; -- Immediate effect
+
+-- View privileges
+SHOW GRANT FOR 'user'@'%';
+
+-- Revoke privileges
+REVOKE CREATEDB ON database.table FROM 'user'@'%';
+
+-- Modify password
+ALTER USER 'user'@'%' IDENTIFIED BY 'new password';
+
+
+CREATE USER 'app_user'@'192.168.1.%' IDENTIFIED BY 'password';
+GRANT SELECT, INSERT, UPDATE ON app_db.* TO 'app_user'@'192.168.1.%';
+SHOW GRANT FOR 'app_user'@'192.168.1.%';
+```
