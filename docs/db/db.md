@@ -919,5 +919,5 @@ ALTER USER 'user'@'%' IDENTIFIED BY 'new password';
 
 CREATE USER 'app_user'@'192.168.1.%' IDENTIFIED BY 'password';
 GRANT SELECT, INSERT, UPDATE ON app_db.* TO 'app_user'@'192.168.1.%';
-SHOW GRANT FOR 'app_user'@'192.168.1.%';
+SHOW GRANTs FOR 'app_user'@'192.168.1.%';
 ```
