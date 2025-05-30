@@ -37,6 +37,7 @@ sudo apt install build-essential
 build-essential
 bison
 flex
+libssh-dev
 libgmp3-dev
 libmpfr-dev
 texinfo
@@ -50,36 +51,133 @@ libgl1-mesa-dev
 mesa-common-dev
 libxcb-cursor-dev
 
-## Qt install on line
-
-```bash
-# https://mirrors.tuna.tsinghua.edu.cn/qt/
-# http://mirrors.ustc.edu.cn/qtproject
-./qt-online-installer-linux-x64-4.9.0.run --mirror http://mirrors.ustc.edu.cn/qtproject
-```
-
-# Cross compiler
-
 ## Debian-based (Such as Ubuntu)
 
 ```bash
-apt update
+sudo apt update
 # Bare metal
-apt install gcc-arm-none-eabi
+sudo apt install gcc-arm-none-eabi
+
 # ARM 32
-apt install gcc-arm-linux-gnueabihf
+sudo apt install crossbuild-essential-armhf
 # ARM 64
-apt install gcc-aarch64-linux-gnu
-
-# To confirm the installation is successful
-arm-none-eabi-gcc --version
-
-# For armv8-64, zlg: gcc-aarch64-linux-gnu 9.4.0
+# For armv8-64, zlg: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu 9.4.0
 # virtual box/vmware:ubuntu-20.04:zlg:zlg
 # rs232:root:zlg
 # ssh:zlg:zlg
-apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+sudo apt install crossbuild-essential-arm64
+
+# To confirm the installation is successful
+aarch64-linux-gnu-gcc --version
 ```
+
+## Qt install on line
+
+```bash
+# Download tslib
+# https:///libts/tslib
+
+# Compile tslib
+# ./configure --host=arm-linux-gnueabihf ac_cv_func_malloc_0_nonnull=yes --cache-file=arm-linux.cache -prefix=/home/tslib-1.21/arm-tslib
+
+sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
+
+# https://mirrors.tuna.tsinghua.edu.cn/qt/
+# http://mirrors.ustc.edu.cn/qtproject
+./qt-online-installer-linux-x64-4.9.0.run --mirror http://mirrors.ustc.edu.cn/qtproject
+
+# Modifies
+qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
+./configure -prefix /home/linux/tool/qt-everywhere-src-5.12.9/arm-qt \
+    -opensource \
+    -confirm-license \
+    -release \
+    -strip \
+    -shared \
+    -xplatform linux-arm-gnueabi-g++ \
+    -optimized-qmake \
+    -c++std c++11 \
+    --rpath=no \
+    -pch \
+    -skip qt3d \
+    -skip qtactiveqt \
+    -skip qtandroidextras \
+    -skip qtcanvas3d \
+    -skip qtconnectivity \
+    -skip qtdatavis3d \
+    -skip qtdoc \
+    -skip qtgamepad \
+    -skip qtlocation \
+    -skip qtmacextras \
+    -skip qtnetworkauth \
+    -skip qtpurchasing \
+    -skip qtremoteobjects \
+    -skip qtscript \
+    -skip qtscxml \
+    -skip qtsensors \
+    -skip qtspeech \
+    -skip qtsvg \
+    -skip qttools \
+    -skip qttranslations \
+    -skip qtwayland \
+    -skip qtwebengine \
+    -skip qtwebview \
+    -skip qtwinextras \
+    -skip qtx11extras \
+    -skip qtxmlpatterns \
+    -make libs \
+    -make examples \
+    -nomake tools -nomake tests \
+    -gui \
+    -widgets \
+    -dbus-runtime \
+    --glib=no \
+    --iconv=no \
+    --pcre=qt \
+    --zlib=qt \
+    -no-openssl \
+    --freetype=qt \
+    --harfbuzz=qt \
+    -no-opengl \
+    -linuxfb \
+    --xcb=no \
+    -tslib \
+    --libpng=qt \
+    --libjpeg=qt \
+    --sqlite=qt \
+    -plugin-sql-sqlite \
+    -I/home/tslib-1.21/arm-tslib/include \
+    -L/home/tslib-1.21/arm-tslib/lib \
+    -recheck-all
+
+# Make environment
+export TSLIB_ROOT=/usr/local/arm-tslib
+    export TSLIB_CONSOLEDEVICE=none
+    export TSLIB_FBDEVICE=/dev/fb0
+    export TSLIB_TSDEVICE=/dev/input/event1
+    export TSLIB_CONFFILE=$TSLIB_ROOT/etc/ts.conf
+    export TSLIB_PLUGINDIR=$TSLIB_ROOT/lib/ts
+    export TSLIB_CALIBFILE=/etc/pointercal
+    export LD_PRELOAD=$TSLIB_ROOT/lib/
+
+export QT_ROOT=/usr/local/arm-qt
+    export QT_QPA_GENERIC_PLUGINS=tslib:/dev/input/event1
+    export QT_QPA_FONTDIR=/usr/share/fonts
+    export QT_QPA_PLATFORM_PLUGIN_PATH=$QT_ROOT/plugins
+    export QT_QPA_PLATFORM=linuxfb:tty=/dev/fb0
+    export QT_PLUGIN_PATH=$QT_ROOT/plugins
+    export LD_LIBRARY_PATH=$QT_ROOT/lib:$QT_ROOT/plugins/platforms
+    export QML2_IMPORT_PATH=$QT_ROOT/qml
+    export QT_QPA_FB_TSLIB=1
+
+```
+
+## 致远电子SUPPORT服务系统
+
+http://support.zlg.cn/redmine/projects/epcsupport40
+
+用户：ivan.yu
+密码：pass123
 
 ## 调试串口
 
