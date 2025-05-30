@@ -35,6 +35,9 @@ sudo apt install build-essential
 ```
 
 build-essential
+autoconf
+libtool
+automake
 bison
 flex
 libssh-dev
