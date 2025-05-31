@@ -31,28 +31,11 @@ deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security m
 
 ```bash
 # Examples to install build-essential
-sudo apt install build-essential
+sudo apt install build-essential autoconf libtool automake bison flex \
+libssh-dev libgmp3-dev libmpfr-dev texinfo libisl-dev pkg-config cmake \
+minicom crossbuild-essential-arm64 crossbuild-essential-armhf libgl1-mesa-dev \
+mesa-common-dev libxcb-cursor-dev
 ```
-
-build-essential
-autoconf
-libtool
-automake
-bison
-flex
-libssh-dev
-libgmp3-dev
-libmpfr-dev
-texinfo
-libisl-dev
-pkg-config
-cmake
-minicom
-crossbuild-essential-arm64
-crossbuild-essential-armhf
-libgl1-mesa-dev
-mesa-common-dev
-libxcb-cursor-dev
 
 ## Debian-based (Such as Ubuntu)
 
