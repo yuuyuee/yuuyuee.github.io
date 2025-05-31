@@ -34,7 +34,7 @@ deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security m
 sudo apt install build-essential autoconf libtool automake bison flex \
 libssh-dev libgmp3-dev libmpfr-dev texinfo libisl-dev pkg-config cmake \
 minicom crossbuild-essential-arm64 crossbuild-essential-armhf libgl1-mesa-dev \
-mesa-common-dev libxcb-cursor-dev
+mesa-common-dev libxcb-cursor-dev libsdl2-dev libsysfs-dev
 ```
 
 ## Debian-based (Such as Ubuntu)
@@ -61,15 +61,16 @@ aarch64-linux-gnu-gcc --version
 
 ```bash
 # Download tslib
-# https:///libts/tslib
+# https://libts/tslib
 
 # Compile tslib
-# ./configure --host=arm-linux-gnueabihf ac_cv_func_malloc_0_nonnull=yes --cache-file=arm-linux.cache -prefix=/home/tslib-1.21/arm-tslib
+./configure --prefix=`pwd`/output --host=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++
 
 sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 
 # https://mirrors.tuna.tsinghua.edu.cn/qt/
 # http://mirrors.ustc.edu.cn/qtproject
+# https://mirrors.sjtug.sjtu.edu.cn/qt/snapshots/qt/5.12/latest/
 ./qt-online-installer-linux-x64-4.9.0.run --mirror http://mirrors.ustc.edu.cn/qtproject
 
 # Modifies
