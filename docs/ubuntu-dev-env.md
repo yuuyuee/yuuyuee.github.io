@@ -34,7 +34,7 @@ deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security m
 sudo apt install build-essential autoconf libtool automake bison flex \
 libssh-dev libgmp3-dev libmpfr-dev texinfo libisl-dev pkg-config cmake \
 minicom crossbuild-essential-arm64 crossbuild-essential-armhf libgl1-mesa-dev \
-mesa-common-dev libxcb-cursor-dev libsdl2-dev libsysfs-dev valgrind
+mesa-common-dev libxcb-cursor-dev libsdl2-dev libsysfs-dev valgrind net-tools
 ```
 
 ## Debian-based (Such as Ubuntu)
