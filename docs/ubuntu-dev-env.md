@@ -34,7 +34,8 @@ deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security m
 sudo apt install build-essential autoconf libtool automake bison flex \
 libssh-dev libgmp3-dev libmpfr-dev texinfo libisl-dev pkg-config cmake \
 minicom crossbuild-essential-arm64 crossbuild-essential-armhf libgl1-mesa-dev \
-mesa-common-dev libxcb-cursor-dev libsdl2-dev libsysfs-dev valgrind net-tools
+mesa-common-dev libxcb-cursor-dev libsdl2-dev libsysfs-dev valgrind net-tools \
+libicu-dev
 ```
 
 ## Debian-based (Such as Ubuntu)
@@ -66,7 +67,12 @@ aarch64-linux-gnu-gcc --version
 # Compile tslib
 ./configure --prefix=`pwd`/output --host=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++
 
+# https://mirror.nju.edu.cn/ubuntu/pool/main/q/
 sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
+
+# https://wiki.qt.io/Building_Qt_5_from_Git
+# git clone  http://code.qt.io/qt/qt.git
+git clone git://code.qt.io/qt/qt.git
 
 # https://mirrors.tuna.tsinghua.edu.cn/qt/
 # http://mirrors.ustc.edu.cn/qtproject
@@ -75,15 +81,12 @@ sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 
 # Modifies
 qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
-./configure -prefix /home/linux/tool/qt-everywhere-src-5.12.9/arm-qt \
-    -opensource \
-    -confirm-license \
-    -release \
-    -strip \
-    -shared \
+./configure -prefix output \
+    -opensource -confirm-license -release \
+    -strip -shared \
     -xplatform linux-arm-gnueabi-g++ \
     -optimized-qmake \
-    -c++std c++11 \
+    -c++std c++17 \
     --rpath=no \
     -pch \
     -skip qt3d \
