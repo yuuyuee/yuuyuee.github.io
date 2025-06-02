@@ -72,7 +72,7 @@ sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 
 # https://wiki.qt.io/Building_Qt_5_from_Git
 # git clone  http://code.qt.io/qt/qt.git
-git clone git://code.qt.io/qt/qt.git
+git clone http://code.qt.io/qt/qt5.git
 
 # https://mirrors.tuna.tsinghua.edu.cn/qt/
 # http://mirrors.ustc.edu.cn/qtproject
@@ -87,7 +87,6 @@ qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
     -xplatform linux-arm-gnueabi-g++ \
     -optimized-qmake \
     -c++std c++17 \
-    --rpath=no \
     -pch \
     -skip qt3d \
     -skip qtactiveqt \
@@ -116,8 +115,7 @@ qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
     -skip qtx11extras \
     -skip qtxmlpatterns \
     -make libs \
-    -make examples \
-    -nomake tools -nomake tests \
+    -nomake examples -nomake tools -nomake tests \
     -gui \
     -widgets \
     -dbus-runtime \
