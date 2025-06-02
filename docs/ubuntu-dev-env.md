@@ -72,7 +72,7 @@ sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 
 # https://wiki.qt.io/Building_Qt_5_from_Git
 # git clone  http://code.qt.io/qt/qt.git
-git clone http://code.qt.io/qt/qt5.git
+git clone https://code.qt.io/qt/qt5.git -b 5.12.8
 
 # https://mirrors.tuna.tsinghua.edu.cn/qt/
 # http://mirrors.ustc.edu.cn/qtproject
