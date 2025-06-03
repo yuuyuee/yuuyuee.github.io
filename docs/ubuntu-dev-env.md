@@ -83,61 +83,18 @@ sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 
 # Modifies
 qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
-./configure -prefix output \
+./configure -prefix /home/ivan/Downloads/qt/qt-everywhere-src-5.12.12/output \
     -opensource -confirm-license -release \
     -strip -shared \
     -xplatform linux-arm-gnueabi-g++ \
     -optimized-qmake \
     -c++std c++17 \
-    -pch \
-    -skip qt3d \
-    -skip qtactiveqt \
-    -skip qtandroidextras \
-    -skip qtcanvas3d \
-    -skip qtconnectivity \
-    -skip qtdatavis3d \
-    -skip qtdoc \
-    -skip qtgamepad \
-    -skip qtlocation \
-    -skip qtmacextras \
-    -skip qtnetworkauth \
-    -skip qtpurchasing \
-    -skip qtremoteobjects \
-    -skip qtscript \
-    -skip qtscxml \
-    -skip qtsensors \
-    -skip qtspeech \
-    -skip qtsvg \
-    -skip qttools \
-    -skip qttranslations \
-    -skip qtwayland \
-    -skip qtwebengine \
-    -skip qtwebview \
-    -skip qtwinextras \
-    -skip qtx11extras \
-    -skip qtxmlpatterns \
-    -make libs \
-    -nomake examples -nomake tools -nomake tests \
-    -gui \
-    -widgets \
-    -dbus-runtime \
-    --glib=no \
-    --iconv=no \
-    --pcre=qt \
-    --zlib=qt \
-    -no-openssl \
-    --freetype=qt \
-    --harfbuzz=qt \
+    -sysroot /home/ivan/armv7-sysroot \
+    -nomake examples -nomake tests \
     -no-opengl \
-    -linuxfb \
-    --xcb=no \
     -tslib \
-    --libpng=qt \
-    --libjpeg=qt \
-    --sqlite=qt \
-    -plugin-sql-sqlite \
-    -I/home/tslib-1.21/arm-tslib/include \
-    -L/home/tslib-1.21/arm-tslib/lib \
+    -I /home/ivan/Downloads/tslib-1.23/install/include \
+    -L /home/ivan/Downloads/tslib-1.23/install/lib \
     -recheck-all
 
 # Make environment
