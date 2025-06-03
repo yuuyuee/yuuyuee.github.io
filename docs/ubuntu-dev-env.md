@@ -58,6 +58,35 @@ sudo apt install crossbuild-essential-arm64
 aarch64-linux-gnu-gcc --version
 ```
 
+## More
+
+```bash
+# About x11
+sudo apt-get install -y libx11-dev freetds-dev libxcb-xinput-dev libpq-dev libiodbc2-dev firebird-dev \
+   libxcb1 libxcb1-dev libx11-xcb1 libx11-xcb-dev  \
+   libxcb-keysyms1 libxcb-keysyms1-dev libxcb-image0 libxcb-image0-dev libxcb-shm0 libxcb-shm0-dev \
+   libxcb-icccm4 libxcb-icccm4-dev libxcb-sync1 libxcb-sync-dev libxcb-render-util0 \
+   libxcb-render-util0-dev libxcb-xfixes0-dev libxrender-dev libxcb-shape0-dev libxcb-randr0-dev \
+   libxcb-glx0-dev libxi-dev libdrm-dev libxcb-xinerama0 libxcb-xinerama0-dev libatspi2.0-dev \
+   libxcursor-dev libxcomposite-dev libxdamage-dev libxss-dev libxtst-dev libpci-dev libcap-dev \
+   libxrandr-dev libdirectfb-dev libaudio-dev libxkbcommon-x11-dev
+
+# About gst
+sudo apt-get install -y libgstreamer1.0-0 gstreamer1.0-plugins-base \
+   gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+   gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools libunwind-dev
+
+# About opengl
+sudo apt-get install -y  libegl1-mesa-dev libgbm-dev libgles2-mesa-dev libgles2-mesa
+
+# other
+sudo apt-get install -y libfreetype6-dev libicu-dev libsqlite3-dev libasound2-dev libnss3-dev \
+   libxss-dev libxtst-dev libpci-dev libcap-dev libsrtp0-dev libxrandr-dev libdirectfb-dev libaudio-dev \
+   libavcodec-dev libavformat-dev libswscale-dev libts-dev libfontconfig1-dev
+
+sudo apt-get install -y libssl-dev libdbus-1-dev libglib2-dev  rsyslog  libjpeg-dev
+```
+
 ## Qt install on line
 
 ```bash
@@ -65,10 +94,43 @@ aarch64-linux-gnu-gcc --version
 # https://libts/tslib
 
 # Compile tslib
-./configure --prefix=`pwd`/output --host=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++
+./configure --prefix=/home/ivan/armv7-sysroot/opt/tslib \
+    --host=arm-linux-gnueabihf \
+    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
+    --disable-tools --enable-shared --disable-static
 
 # https://mirror.nju.edu.cn/ubuntu/pool/main/q/
 sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
+
+## depends
+
+# qt5-default
+# qtbase5-dev (= 5.12.8+dfsg-0ubuntu2.1) | qtbase5-gles-dev (>= 5.12.8+dfsg), qtchooser (>= 55-gc9562a1-1~)
+
+# qtbase5-gles-dev
+# libegl-dev
+# libgles-dev
+# libqt5concurrent5 (>= 5.12.8+dfsg)
+# libqt5core5a (>= 5.12.8+dfsg)
+# libqt5dbus5 (>= 5.12.8+dfsg)
+# libqt5gui5-gles (= 5.12.8+dfsg-0ubuntu1)
+# libqt5network5 (>= 5.12.8+dfsg)
+# libqt5printsupport5 (>= 5.12.8+dfsg)
+# libqt5sql5 (>= 5.12.8+dfsg)
+# libqt5test5 (>= 5.12.8+dfsg)
+# libqt5widgets5 (>= 5.12.8+dfsg)
+# libqt5xml5 (>= 5.12.8+dfsg)
+# libvulkan-dev
+# libxext-dev
+# qt5-qmake (>= 5.12.8+dfsg)
+# qtbase5-dev-tools (>= 5.12.8+dfsg)
+# qtchooser
+
+# qtdeclarative5-dev
+# libqt5qml5 (= 5.12.8-0ubuntu1), libqt5quick5 (= 5.12.8-0ubuntu1), libqt5quickparticles5 (= 5.12.8-0ubuntu1),
+# libqt5quickshapes5 (= 5.12.8-0ubuntu1), libqt5quicktest5 (= 5.12.8-0ubuntu1),
+# libqt5quickwidgets5 (= 5.12.8-0ubuntu1), qt5-qmltooling-plugins, qtbase5-dev, qtdeclarative5-dev-tools
+
 
 # https://wiki.qt.io/Building_Qt_5_from_Git
 # https://wiki.qt.io/Building_Qt_5_from_Git/zh
@@ -82,6 +144,7 @@ sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 ./qt-online-installer-linux-x64-4.9.0.run --mirror http://mirrors.ustc.edu.cn/qtproject
 
 # Modifies
+# qt5-default = (qtbase5-dev | qtbase5-gles-dev), qtchooser
 qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
 ./configure -prefix /home/ivan/Downloads/qt/qt-everywhere-src-5.12.12/output \
     -opensource -confirm-license -release \
@@ -122,6 +185,7 @@ export QT_ROOT=/usr/local/arm-qt
 ## 致远电子SUPPORT服务系统
 
 http://support.zlg.cn/redmine/projects/epcsupport40
+https://manual.zlg.cn/web/#/30/1099
 
 用户：ivan.yu
 密码：pass123

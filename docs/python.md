@@ -27,6 +27,18 @@ conda install numpy
 conda deactivate
 ```
 
+## Modify conda sources
+
+```bash
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+
+conda config --set show_channel_urls yes
+
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
 ## Modify pip sources
 
 ```bash
