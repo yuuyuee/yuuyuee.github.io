@@ -25,6 +25,7 @@ deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports/ focal-backports
 deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security main restricted
 deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security universe
 deb [arch=arm64,armhf] https://mirrors.ustc.edu.cn/ubuntu-ports focal-security multiverse
+
 ```
 
 ## Base libraries
@@ -180,12 +181,20 @@ export QT_ROOT=/usr/local/arm-qt
     export QML2_IMPORT_PATH=$QT_ROOT/qml
     export QT_QPA_FB_TSLIB=1
 
+
+# em-500 libraries
+# libdrm (KMS)
+# DirectFB (/dev/fb0 /dev/fb1)
+
+# I.MX6ULL cross-compiler options
+# -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 ```
 
 ## 致远电子SUPPORT服务系统
 
 http://support.zlg.cn/redmine/projects/epcsupport40
 https://manual.zlg.cn/web/#/30/1099
+deb https://mirrors.ustc.edu.cn/ubuntu-ports focal main restricted universe multiverse
 
 用户：ivan.yu
 密码：pass123
@@ -202,8 +211,9 @@ https://manual.zlg.cn/web/#/30/1099
 
 ## Ether
 
-IP：192.168.1.136
-用户：zlg
+NET1网口默认IP：DHCP
+NET2网口默认IP：192.168.3.136
+用户名：zlg
 密码：zlg
 
 ## 蜂鸣器
