@@ -95,10 +95,13 @@ sudo apt-get install -y libssl-dev libdbus-1-dev libglib2-dev  rsyslog  libjpeg-
 # https://libts/tslib
 
 # Compile tslib
-./configure --prefix=/home/ivan/armv7-sysroot/opt/tslib \
-    --host=arm-linux-gnueabihf \
-    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
-    --disable-tools --enable-shared --disable-static
+./configure --prefix=/home/ivan/armv7-sysroot/opt/tslib-1.23 \
+--host=arm-linux-gnueabihf \
+CC=arm-linux-gnueabihf-gcc \
+CXX=arm-linux-gnueabihf-g++ \
+CFLAGS="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard" \
+CXXFLAGS="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard" \
+--disable-tools --enable-shared --disable-static
 
 # https://mirror.nju.edu.cn/ubuntu/pool/main/q/
 sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
@@ -146,20 +149,23 @@ sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev
 
 # Modifies
 # qt5-default = (qtbase5-dev | qtbase5-gles-dev), qtchooser
-qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf
-./configure -prefix /home/ivan/Downloads/qt/qt-everywhere-src-5.12.12/output \
+```bash
+ROOTFS=/home/ivan/armv7-sysroot
+TSLIB=${ROOTFS}/opt/tslib-1.23
+
+./configure -prefix /opt/qt-armv7-5.12.8 \
     -opensource -confirm-license -release \
-    -strip -shared \
-    -xplatform linux-arm-gnueabi-g++ \
-    -optimized-qmake \
-    -c++std c++17 \
-    -sysroot /home/ivan/armv7-sysroot \
+    -strip -shared -recheck-all \
+    -xplatform linux-arm-gnueabi-g++ -c++std c++1z \
+    QMAKE_CFLAGS="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard" \
+    QMAKE_CXXFLAGS="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard" \
+    -sysroot ${ROOTFS} \
+    -I ${TSLIB}/include -L ${TSLIB}/lib -tslib \
+    -no-opengl -no-icu -no-accessibility \
     -nomake examples -nomake tests \
-    -no-opengl \
-    -tslib \
-    -I /home/ivan/Downloads/tslib-1.23/install/include \
-    -L /home/ivan/Downloads/tslib-1.23/install/lib \
-    -recheck-all
+    -skip qtwebengine -skip webview -skip multimedia \
+    -linuxfb -gui -widgets -v
+```
 
 # Make environment
 export TSLIB_ROOT=/usr/local/arm-tslib
@@ -188,6 +194,7 @@ export QT_ROOT=/usr/local/arm-qt
 
 # I.MX6ULL cross-compiler options
 # -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+# QMAKE_CFLAGS += -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 ```
 
 ## 致远电子SUPPORT服务系统
