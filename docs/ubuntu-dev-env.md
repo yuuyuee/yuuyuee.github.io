@@ -355,6 +355,25 @@ nmcli connection modify net1-static ipv4.dns 114.114.114.114
 # 重载网络设备配置
 # 注意：此处不是net1-static，而是net1。若需替换为其他网络设备，应是net2、net3、net4
 nmcli device reapply net1
+
+
+# 设置静态IP地址
+nmcli connection modify net1-static ipv4.addresses 192.168.1.136/24
+# 设置静态IP网关
+nmcli connection modify net1-static ipv4.gateway 192.168.1.1
+# 设置静态IP的DNS服务器地址
+nmcli connection modify net1-static ipv4.dns 114.114.114.114
+# 使能静态配置(默认已经启用)
+nmcli connection up net1-static
+
+# 设置NET1为DHCP
+nmcli connection up net1-dhcp
+# 设置NET1的DHCP配置优先级，此命令的用处是开机优先配置DHCP
+# 但需注意，此命令重启后生效，如需立即切换DHCP模式，请运行nmcli connection up net1-dhcp
+nmcli connection modify net1-dhcp connection.autoconnect-priority 2
+# 配置DHCP超时时间，单位是秒
+nmcli con modify net1-dhcp ipv4.dhcp-timeout 60
+
 ```
 
 ## Wi-Fi
@@ -381,6 +400,120 @@ nmcli connnection modify WIFI_NAME connection.autoconnect yes
 
 # 若不想使用NetworkManager，也可使用/etc/network/interfaces文件配置网络
 # 一旦在/etc/network/interfaces文件中配置了相应的网络接口，NetworkManager将不再接管该网络接口。
+
+# 列出WIFI列表
+nmcli device wifi list
+# 连接无密码网络，<ssid>是连接WIFI的SSID
+nmcli device wifi connect <ssid>
+# 连接有密码网络，<ssid>是连接WIFI的SSID，<psk>是连接WIFI的密码
+nmcli device wifi connect <ssid> password <psk>
+# 查看是否连接成功
+nmcli device status
+
+# 若WIFI模块支持STA，可使用以下命令配置热点
+# 创建connection
+# 以下命令中的WIFI_NAME、WIFI_SSID、WIFI_PSK，可根据需求修改
+nmcli device wifi hotspot ifname wlan0 con-name WIFI_NAME ssid WIFI_SSID password WIFI_PSK
+nmcli connnection modify WIFI_NAME connection.autoconnect yes
+
+
+# 网络优先级
+ip route
+# default via 192.168.19.164 dev wlan0 proto dhcp metric 600
+# default via 192.168.1.1 dev net1 proto static metric 800
+# 192.168.1.0/24 dev net1 proto kernel scope link src 192.168.1.136 metric 800
+# 192.168.19.0/24 dev wlan0 proto kernel scope link src 192.168.19.158 metric 600
+# wlan0的网络metric属性为600，net1网络metric属性为800
+# 默认使用无线网络，待无线断连后，使用有线网络
+nmcli connection modify net1-dhcp ipv4.route-metric 800
+nmcli connection modify net1-dhcp ipv6.route-metric 800
+```
+
+## 4G
+
+```bash
+## 电源控制
+# 开启电源  / gpio481
+gpioset 0 25=0
+# 关闭电源  /gpio481
+gpioset 0 25=1
+
+## 复位脚控制
+# 拉高复位信号
+gpioset 0 32=0
+# 拉低复位信号
+gpioset 0 32=1
+
+## 切换ECM模式
+# 注意：切换ECM模式仅需切换一次，切换成功以后，4G模块重新上下电都是ECM模式
+# 注意：成功切换ECM模式后，4G模块需重新上下电。具体命令参考电源控制
+# 广和通NL668
+echo -e "AT+GTUSBMODE=23\r\n" > /dev/ttyUSB0
+# 广和通L610-CN
+echo -e "AT+GTUSBMODE=31\r\n" > /dev/ttyUSB0
+# 移远(EC20、EC200-CN、EC200A-CN、EG25-G、EG912-GL)
+echo -e "AT+QCFG=\"usbnet\",1\r\n" > /dev/ttyUSB0
+# 合宙(Air724UG)
+echo -e "AT+SETUSB=2\r\n" > /dev/ttyUSB0
+# 有方(N58-CB)
+echo -e "AT+NETSHAREMODE=1\r\n" > /dev/ttyUSB0
+
+## ECM拨号
+# 注意：标准的4G模块都有统一的AT命令来识别模块情况，但部分厂商也提供私有AT命令来确认
+# 而mmcli仅使用标准的AT命令来获取模块信息，如mmcli获取信息正常，但拨号失败。请参照具
+# 体的4G模块的使用手册推荐的流程来判断模块情况。
+
+# 列出当前的可用的4G模块
+mmcli -L
+# /org/freedesktop/ModemManager1/Modem/1 [Neoway Corp Ltd] N58
+
+# 4g模块的信息
+mmcli -m <id>
+
+## 拨号
+# 每个4G模块的拨号命令可能有所不同，但都需先配置PDP，配置PDP的命令都是一致的
+# 具体的运营商不同，命令也不同
+
+# 运营商为电信
+echo -e "AT+CGDCONT=1,\"IP\",\"CTNET\"\r\n" > /dev/ttyUSB0
+# 运营商为联通
+echo -e "AT+CGDCONT=1,\"IP\",\"3GNET\"\r\n" > /dev/ttyUSB0
+# 运营商为移动
+echo -e "AT+CGDCONT=1,\"IP\",\"CMNET\"\r\n" > /dev/ttyUSB0
+
+# 广和通(L610-CN、NL668)
+# 拨号
+echo -e "AT+GTRNDIS=1,1\r\n" > /dev/ttyUSB0
+# 挂断
+echo -e "AT+GTRNDIS=0,1\r\n" > /dev/ttyUSB0
+
+# 移远(EC20、EC200-CN、EC200A-CN、EG25-G、EG912-GL)
+# 拨号
+echo -e "AT+QNETDEVCTL=1,1,1\r\n" > /dev/ttyUSB0
+# 挂断
+echo -e "AT+QNETDEVCTL=0,1,1\r\n" > /dev/ttyUSB0
+
+#合宙(Air724UG)
+#  具有自动拨号功能，无需手动拨号
+
+# 有方(N58-CB)
+# 拨号
+echo -e "AT+NETSHAREACT=2,1,0\r\n" > /dev/ttyUSB0
+# 挂断
+echo -e "AT+NETSHAREACT=2,0,0\r\n" > /dev/ttyUSB0
+
+## DHCP获取IP地址
+# 在EM-1000上使用4G模块的最后一步是获取IP地址，在拨号成功后，如果设备能被
+# NetworkManager接管，就会自动获取IP地址和配置DNS。如果不能被NetworkManager接管
+#，需手动运行命令获取IP地址。并手动写入DNS服务器到/etc/resolv.conf文件中
+# 在使用dhclient获取IP前需要使用ifconfig -a看下对应的网络接口名称
+dhclient eth0
+
+## Q&A
+# Q1: 4G模块上电后没有加载/dev/ttyUSB*等串口设备？
+# A1：设备的ID没有写入驱动，需每次启动手动写入。首先，从4G模块的启动信息获取设备的
+# vid和pid，然后，使用命令写入驱动。
+echo "2949 7402 ff" > /sys/bus/usb-serial/drivers/option1/new_id
 ```
 
 ## CAN
