@@ -165,6 +165,71 @@ TSLIB=${ROOTFS}/opt/tslib-1.23
     -nomake examples -nomake tests \
     -skip qtwebengine -skip webview -skip multimedia \
     -linuxfb -gui -widgets -v
+
+#!/usr/bin/bash
+
+set -e
+
+TSLIB_ROOT="/home/ivan/Downloads/qt/tslib-1.23-aarch64"
+
+Usage() {
+    echo "Usage: $0 <armhf|aarch64> <src>"
+    echo "    armhf  -> arm-linux-gnueabihf-g++"
+    echo "    aarch64-> aarch64-linux-gnu-g++"
+    exit 1
+}
+
+[ $# -lt 2 ] && Usage
+
+ARCH=$1
+case $ARCH in
+    armhf)
+        MKSPECS=linux-arm-gnueabi-g++
+        # TOOLCHAIN=$HOME/x-tools/arm-linux-gnueabihf
+        # CROSS=arm-linux-gnueabihf
+        # CPUOPT="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard"
+        ;;
+    aarch64)
+        MKSPECS=linux-aarch64-gnu-g++
+        # TOOLCHAIN=$HOME/x-tools/aarch64-linux-gnu
+        # CROSS=aarch64-linux-gnu
+        # CPUOPT="-march=armv8-a"
+        ;;
+    *)
+        Usage
+        ;;
+esac
+
+SRC_DIR=$(realpath $2)
+[ -d "${SRC_DIR}/qtbase/mkspecs/${MKSPECS}" ] || {
+    echo "ERROR: ${SRC_DIR}/qtbase/mkspecs/${MKSPECS} not exists"
+    echo "Available platform"
+    ls "${SRC_DIR}/qtbase/mkspecs" | grep linux
+    exit 1
+}
+
+BUILD_DIR="$(pwd)/qt-build-${ARCH}"
+TARGET_DIR="$(pwd)/qt-target-${ARCH}"
+
+rm -rf "$BUILD_DIR" "$TARGET_DIR"
+mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR"
+
+${SRC_DIR}/configure                                    \
+  -prefix ${TARGET_DIR}                                 \
+  -opensource -confirm-license                          \
+  -release -shared -xplatform ${MKSPECS}                \
+  -no-gcc-sysroot -no-xcb -no-eglfs                     \
+  -no-opengl -no-feature-vulkan                         \
+  -no-dbus -no-glib -no-gtk -no-cups -no-sql-sqlite     \
+  -no-iconv -qt-freetype -qt-harfbuzz -qt-pcre          \
+  -qt-libjpeg -qt-libpng                                \
+  -make libs                                            \
+  -nomake examples -nomake tests -nomake tools          \
+  -I${TSLIB_ROOT}/include -L${TSLIB_ROOT}/lib -tslib    \
+  -recheck-all -v
+
+make -j$(nproc) && make install
+
 ```
 
 # Make environment
