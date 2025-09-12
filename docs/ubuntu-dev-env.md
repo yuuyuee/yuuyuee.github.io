@@ -104,7 +104,7 @@ CXXFLAGS="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard" \
 --disable-tools --enable-shared --disable-static
 
 # https://mirror.nju.edu.cn/ubuntu/pool/main/q/
-sudo apt install qt5-default qtcreator qttools5-dev qtdeclarative5-dev libqt5svg5 libqt5svg5-dev libqt5virtualkeyboard5-dev
+sudo apt install qt5-default qtbase5-dev qtcreator qttools5-dev qtdeclarative5-dev libqt5svg5 libqt5svg5-dev libqt5virtualkeyboard5-dev
 
 ## depends
 
