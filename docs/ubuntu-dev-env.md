@@ -233,24 +233,26 @@ make -j$(nproc) && make install
 ```
 
 # Make environment
-export TSLIB_ROOT=/usr/local/arm-tslib
-    export TSLIB_CONSOLEDEVICE=none
-    export TSLIB_FBDEVICE=/dev/fb0
-    export TSLIB_TSDEVICE=/dev/input/event1
-    export TSLIB_CONFFILE=$TSLIB_ROOT/etc/ts.conf
-    export TSLIB_PLUGINDIR=$TSLIB_ROOT/lib/ts
-    export TSLIB_CALIBFILE=/etc/pointercal
-    export LD_PRELOAD=$TSLIB_ROOT/lib/
 
-export QT_ROOT=/usr/local/arm-qt
-    export QT_QPA_GENERIC_PLUGINS=tslib:/dev/input/event1
-    export QT_QPA_FONTDIR=/usr/share/fonts
-    export QT_QPA_PLATFORM_PLUGIN_PATH=$QT_ROOT/plugins
-    export QT_QPA_PLATFORM=linuxfb:tty=/dev/fb0
-    export QT_PLUGIN_PATH=$QT_ROOT/plugins
-    export LD_LIBRARY_PATH=$QT_ROOT/lib:$QT_ROOT/plugins/platforms
-    export QML2_IMPORT_PATH=$QT_ROOT/qml
-    export QT_QPA_FB_TSLIB=1
+```bash
+## TSLIB
+export TSLIB_TSDEVICE=/dev/input/event0
+export TSLIB_CALIBFILE=/etc/pointercal
+export TSLIB_CONFFILE=/etc/ts.conf
+export TSLIB_PLUGINDIR=/usr/lib/aarch64-linux-gnu/ts0
+export TSLIB_CONSOLEDEVICE=none
+export TSLIB_FBDEVICE=/dev/fb0
+
+## QT
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/zlg/qt-target-aarch64/lib
+export QT_QPA_PLATFORM_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins/platforms
+export QT_QPA_PLATFORM=linuxfb:size=1280x800
+export QT_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins
+export QT_QPA_FONTDIR=/home/zlg/qt-target-aarch64/fonts
+export QT_QPA_FB_DEVICE=/dev/fb0
+#export QT_QPA_FONTDIR=/usr/share/fonts/dejavu
+export QT_QPA_GENERIC_PLUGINS=tslib:/dev/input/event0
+```
 
 
 # em-500 libraries
