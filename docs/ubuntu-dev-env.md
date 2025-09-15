@@ -247,6 +247,7 @@ export TSLIB_FBDEVICE=/dev/fb0
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/zlg/qt-target-aarch64/lib
 export QT_QPA_PLATFORM_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins/platforms
 export QT_QPA_PLATFORM=linuxfb:size=1280x800
+export QT_QPA_FB_TSLIB=1
 export QT_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins
 export QT_QPA_FONTDIR=/home/zlg/qt-target-aarch64/fonts
 export QT_QPA_FB_DEVICE=/dev/fb0
