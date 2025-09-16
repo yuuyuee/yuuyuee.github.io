@@ -253,6 +253,11 @@ export QT_QPA_FONTDIR=/home/zlg/qt-target-aarch64/fonts
 export QT_QPA_FB_DEVICE=/dev/fb0
 #export QT_QPA_FONTDIR=/usr/share/fonts/dejavu
 export QT_QPA_GENERIC_PLUGINS=tslib:/dev/input/event0
+
+
+## Add screen driver
+cp em1000-lvds-ZPM101RTW02.dtbo /boot/run/
+reboot
 ```
 
 
