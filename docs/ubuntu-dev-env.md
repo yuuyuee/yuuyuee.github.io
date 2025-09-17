@@ -248,7 +248,7 @@ export QT_QPA_PLATFORM_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins/platforms
 export QT_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins
 export QT_QPA_FONTDIR=/home/zlg/qt-target-aarch64/lib/fonts
 
-export QT_QPA_PLATFORM=linuxfb:fb=/dev/fb0:size=1280x800:mmsize=1280x800
+export QT_QPA_PLATFORM=linuxfb:fb=/dev/fb0:size=1280x800:mmsize=1280x800:tty=/dev/tty1
 export QT_QPA_FB_TSLIB=1
 export QT_QPA_GENERIC_PLUGINS=tslib:/dev/input/event0
 
