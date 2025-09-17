@@ -235,7 +235,6 @@ make -j$(nproc) && make install
 # Make environment
 
 ```bash
-## TSLIB
 export TSLIB_TSDEVICE=/dev/input/event0
 export TSLIB_CALIBFILE=/etc/pointercal
 export TSLIB_CONFFILE=/etc/ts.conf
@@ -243,16 +242,18 @@ export TSLIB_PLUGINDIR=/usr/lib/aarch64-linux-gnu/ts0
 export TSLIB_CONSOLEDEVICE=none
 export TSLIB_FBDEVICE=/dev/fb0
 
-## QT
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/zlg/qt-target-aarch64/lib
+
 export QT_QPA_PLATFORM_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins/platforms
-export QT_QPA_PLATFORM=linuxfb:size=1280x800
-export QT_QPA_FB_TSLIB=1
 export QT_PLUGIN_PATH=/home/zlg/qt-target-aarch64/plugins
-export QT_QPA_FONTDIR=/home/zlg/qt-target-aarch64/fonts
-export QT_QPA_FB_DEVICE=/dev/fb0
-#export QT_QPA_FONTDIR=/usr/share/fonts/dejavu
+export QT_QPA_FONTDIR=/home/zlg/qt-target-aarch64/lib/fonts
+
+export QT_QPA_PLATFORM=linuxfb:fb=/dev/fb0:size=1280x800:mmsize=1280x800
+export QT_QPA_FB_TSLIB=1
 export QT_QPA_GENERIC_PLUGINS=tslib:/dev/input/event0
+
+export QT_QPA_FB_DRM=1
+export QT_QPA_FB_FORCE_FULLSCREEN=1
 
 
 ## Add screen driver
