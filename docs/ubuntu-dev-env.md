@@ -255,6 +255,14 @@ export QT_QPA_FB_TSLIB=1
 export QT_QPA_FB_DRM=1
 export QT_QPA_FB_FORCE_FULLSCREEN=1
 
+# User groups
+usermod -aG video $USER
+usermod -aG input $USER
+
+# Some system could reset the permission before reboot
+vim /etc/udev/rules.d/99-input-permissions.rules
+# KERNEL=="event*", SUBSYSTEM=="input", GROUP="input", MODE="0660"
+udevadm control --reload-rules && sudo udevadm trigger
 
 ## Add screen driver
 cp em1000-lvds-ZPM101RTW02.dtbo /boot/run/
